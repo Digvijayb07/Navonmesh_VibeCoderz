@@ -10,6 +10,7 @@ import HowItWorks from "@/components/sections/HowItWorks";
 import Marketplace from "@/components/sections/Marketplace";
 import TrustSecurity from "@/components/sections/TrustSecurity";
 import AnalyticsDashboard from "@/components/sections/AnalyticsDashboard";
+import Dispute from "@/components/sections/Dispute";
 import Logistics from "@/components/sections/Logistics";
 import Testimonials from "@/components/sections/Testimonials";
 import Button from "@/components/ui/Button";
@@ -28,6 +29,7 @@ export default function Home() {
         <Logistics />
         <TrustSecurity />
         <AnalyticsDashboard />
+        <Dispute />
         <Testimonials />
 
         {/* CTA Section */}
