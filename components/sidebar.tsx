@@ -11,12 +11,8 @@ const menuItems = [
   { icon: '👤', label: 'My Profile', href: '/profile' },
   { icon: '🛒', label: 'Marketplace', href: '/marketplace' },
   { icon: '🤝', label: 'Exchange', href: '/exchange' },
-  { icon: '🚚', label: 'Logistics', href: '/logistics' },
-  { icon: '📈', label: 'Market Prices', href: '/market-prices' },
   { icon: '⭐', label: 'Trust Profile', href: '/trust-profile' },
-  // { icon: '📊', label: 'Analytics', href: '/analytics' },
   { icon: '⚖️', label: 'Disputes', href: '/disputes' },
-  { icon: '⚙️', label: 'Settings', href: '/settings' },
 ];
 
 export function Sidebar() {
