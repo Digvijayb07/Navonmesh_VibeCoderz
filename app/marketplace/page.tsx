@@ -31,7 +31,7 @@ interface ProduceListing {
 }
 
 interface ListingWithDistance extends ProduceListing {
-  _distance?: number; // km, computed client-side
+  _distance?: number; 
 }
 
 interface ListingForm {
