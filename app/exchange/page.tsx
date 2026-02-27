@@ -15,7 +15,6 @@ interface ExchangeRequest {
   quantity_requested: number;
   status: 'pending' | 'accepted' | 'rejected' | 'in_transit' | 'completed';
   created_at: string;
-  // joined from produce_listings
   produce_listings?: {
     crop_name: string;
     unit: string;
@@ -23,6 +22,12 @@ interface ExchangeRequest {
     location: string;
     quality_grade: string;
     farmer_id: string;
+  };
+  // joined from profiles via buyer_id → profiles.id
+  profiles?: {
+    full_name: string | null;
+    phone: string | null;
+    role: string | null;
   };
 }
 
@@ -66,11 +71,11 @@ function formatDate(iso: string) {
 export default function ExchangePage() {
   const supabase = createClient();
 
-  const [exchanges, setExchanges]     = useState<ExchangeRequest[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
-  const [fetchError, setFetchError]   = useState<string | null>(null);
+  const [exchanges, setExchanges]       = useState<ExchangeRequest[]>([]);
+  const [loadingData, setLoadingData]   = useState(true);
+  const [fetchError, setFetchError]     = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<StatusFilter>('all');
-  const [actionLoading, setActionLoading] = useState<string | null>(null); // id of row being updated
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // ── Get current user ────────────────────────────────────────────────────────
@@ -94,6 +99,11 @@ export default function ExchangePage() {
           location,
           quality_grade,
           farmer_id
+        ),
+        profiles (
+          full_name,
+          phone,
+          role
         )
       `)
       .order('created_at', { ascending: false });
@@ -101,8 +111,13 @@ export default function ExchangePage() {
     if (activeFilter !== 'all') query = query.eq('status', activeFilter);
 
     const { data, error } = await query;
-    if (error) setFetchError(error.message);
-    else setExchanges((data ?? []) as ExchangeRequest[]);
+    if (error) {
+      setFetchError(error.message);
+      setLoadingData(false);
+      return;
+    }
+
+    setExchanges((data ?? []) as ExchangeRequest[]);
     setLoadingData(false);
   }, [activeFilter]);
 
@@ -192,15 +207,25 @@ export default function ExchangePage() {
         {!loadingData && exchanges.length > 0 && (
           <div className="space-y-4">
             {exchanges.map((ex) => {
-              const crop = ex.produce_listings;
+              const crop  = ex.produce_listings;
+              const buyer = ex.profiles; // joined from profiles table via buyer_id
               const isLoading = actionLoading === ex.id;
-              const isFarmer = currentUserId === crop?.farmer_id;
-              const isBuyer  = currentUserId === ex.buyer_id;
+              const isFarmer  = currentUserId === crop?.farmer_id;
+              const isBuyer   = currentUserId === ex.buyer_id;
+
+              // Derive display name: full_name from profiles → short UUID fallback
+              const buyerName =
+                buyer?.full_name ||
+                `User ${ex.buyer_id.slice(0, 6).toUpperCase()}`;
+              const buyerInitial = buyerName.charAt(0).toUpperCase();
+              const buyerRole = buyer?.role
+                ? buyer.role.charAt(0).toUpperCase() + buyer.role.slice(1)
+                : null;
 
               return (
                 <Card key={ex.id} className="border-border hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-center">
 
                       {/* Crop Info */}
                       <div className="flex items-center gap-3">
@@ -227,7 +252,24 @@ export default function ExchangePage() {
                         <p className="text-xs text-muted-foreground">{formatDate(ex.created_at)}</p>
                       </div>
 
-                      {/* Role Badges */}
+                      {/* Requested By */}
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">Requested By</p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-primary/20 text-primary font-bold text-sm flex items-center justify-center flex-shrink-0">
+                            {buyerInitial}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-foreground text-sm truncate">{buyerName}</p>
+                          </div>
+                        </div>
+                        {isBuyer && (
+                          <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-blue-100/60 text-blue-700 border border-blue-300 font-medium">
+                            You
+                          </span>
+                        )}
+                      </div>
+
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2 flex-wrap">
                           {isFarmer && (
