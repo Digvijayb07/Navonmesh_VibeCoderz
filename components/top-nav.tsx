@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createClient } from '@/utils/supabase/client';
+import { NotificationBell } from '@/components/notification-bell';
 import type { User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
 
@@ -59,13 +60,7 @@ export function TopNav() {
         {/* Right Section */}
         <div className="flex items-center gap-4">
           {/* Notifications */}
-          <button
-            className="relative p-2 hover:bg-secondary rounded-lg transition-colors"
-            title="Notifications"
-          >
-            <span className="text-xl">🔔</span>
-            <div className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
-          </button>
+          <NotificationBell userId={user?.id ?? null} />
 
           {/* Messages */}
           <button

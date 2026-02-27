@@ -135,6 +135,25 @@ export default function ExchangePage() {
       setExchanges((prev) =>
         prev.map((ex) => ex.id === id ? { ...ex, status: newStatus as ExchangeRequest['status'] } : ex)
       );
+
+      // Notify the buyer for farmer-initiated status changes
+      const notifyMessages: Record<string, string> = {
+        accepted: 'Your buy request for {crop} has been accepted',
+        rejected: 'Your buy request for {crop} has been rejected',
+        in_transit: 'Your order for {crop} is now in transit',
+      };
+
+      if (notifyMessages[newStatus]) {
+        const exchange = exchanges.find((ex) => ex.id === id);
+        if (exchange) {
+          const cropName = exchange.produce_listings?.crop_name ?? 'your crop';
+          const message = notifyMessages[newStatus].replace('{crop}', cropName);
+          await supabase.from('notifications').insert({
+            user_id: exchange.buyer_id,
+            message,
+          });
+        }
+      }
     }
     setActionLoading(null);
   };
