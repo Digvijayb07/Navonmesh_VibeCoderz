@@ -50,6 +50,47 @@ function BarChart({ data }: { data: { month: string; value: number }[] }) {
   );
 }
 
+function NearbyMap() {
+  return (
+    <div className="lg:col-span-2 glass-card rounded-2xl p-8">
+      <h3 className="text-lg font-bold text-green-900 mb-4" style={{ fontFamily: "var(--font-poppins)" }}>📍 Nearby Buyers & Farmers</h3>
+      <div className="rounded-lg bg-green-50 h-[220px] flex items-center justify-center relative overflow-hidden">
+        {/* Stylized map placeholder */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-[20%] left-[30%] w-3 h-3 rounded-full bg-green-600 animate-pulse" />
+          <div className="absolute top-[40%] left-[55%] w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+          <div className="absolute top-[60%] left-[25%] w-3 h-3 rounded-full bg-green-600 animate-pulse" />
+          <div className="absolute top-[35%] left-[70%] w-3 h-3 rounded-full bg-orange-500 animate-pulse" />
+          <div className="absolute top-[70%] left-[60%] w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+          <div className="absolute top-[15%] left-[80%] w-2 h-2 rounded-full bg-green-600 animate-pulse" />
+          <div className="absolute top-[80%] left-[40%] w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+          {/* Lines connecting dots */}
+          <svg className="absolute inset-0 w-full h-full">
+            <line x1="30%" y1="20%" x2="55%" y2="40%" stroke="#16a34a" strokeWidth="1" strokeDasharray="4 4" opacity="0.3" />
+            <line x1="55%" y1="40%" x2="25%" y2="60%" stroke="#16a34a" strokeWidth="1" strokeDasharray="4 4" opacity="0.3" />
+            <line x1="55%" y1="40%" x2="70%" y2="35%" stroke="#3b82f6" strokeWidth="1" strokeDasharray="4 4" opacity="0.3" />
+          </svg>
+        </div>
+        <div className="text-center z-10">
+          <p className="text-green-700/70 text-sm font-medium">Interactive Map</p>
+          <p className="text-xs text-green-700/50 mt-1">🟢 12 Farmers · 🔵 8 Buyers nearby</p>
+        </div>
+      </div>
+      <div className="flex gap-4 mt-4 text-xs text-green-700/70">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-green-600" /> Farmers
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-blue-500" /> Buyers
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-orange-500" /> Transporters
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function DonutChart({
   data,
 }: {
@@ -131,9 +172,9 @@ export default function AnalyticsDashboard() {
         </p>
       </div>
 
-      <div ref={cardsRef} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div ref={cardsRef} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 glass-card rounded-2xl p-8">
+        <div className="lg:col-span-1 glass-card rounded-2xl p-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-bold text-green-900" style={{ fontFamily: "var(--font-poppins)" }}>
@@ -153,7 +194,7 @@ export default function AnalyticsDashboard() {
         </div>
 
         {/* Token Wallet */}
-        <div className="glass-card rounded-2xl p-8">
+        <div className="lg:col-span-1 glass-card rounded-2xl p-8">
           <h3 className="text-lg font-bold text-green-900 mb-4" style={{ fontFamily: "var(--font-poppins)" }}>
             Token Wallet
           </h3>
@@ -191,8 +232,11 @@ export default function AnalyticsDashboard() {
           </div>
         </div>
 
+        {/* Nearby Map */}
+        <NearbyMap />
+
         {/* Transaction History */}
-        <div className="lg:col-span-3 glass-card rounded-2xl p-8">
+        <div className="lg:col-span-4 glass-card rounded-2xl p-8">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-green-900" style={{ fontFamily: "var(--font-poppins)" }}>
               Recent Transactions
