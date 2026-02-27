@@ -15,37 +15,27 @@ export default function DashboardPage() {
           <p className="text-muted-foreground mt-2">Your trusted agricultural exchange platform</p>
         </div>
 
-        {/* Statistics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            icon="📊"
-            title="Active Listings"
-            value="24"
-            subtitle="Current crop listings"
-            trend={12}
-          />
-          <StatCard
-            icon="🤝"
-            title="Pending Exchanges"
-            value="8"
-            subtitle="Awaiting your approval"
-            trend={5}
-          />
-          <TrustScoreStat />
-          <StatCard
-            icon="💰"
-            title="Revenue (This Month)"
-            value="₹42,500"
-            subtitle="From completed sales"
-            trend={15}
-          />
+        {/* Statistics row – two cards flexed evenly */}
+        <div className="flex flex-wrap gap-4 justify-center">
+          <div className="flex-1 min-w-[260px]">
+            <StatCard
+              icon="🤝"
+              title="Pending Exchanges"
+              value="8"
+              subtitle="Awaiting your approval"
+              trend={5}
+            />
+          </div>
+          <div className="flex-1 min-w-[260px]">
+            <TrustScoreStat />
+          </div>
         </div>
 
         {/* Charts and Alerts */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <PriceChart />
           <MarketAlerts />
-        </div>
+        </div> */}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
