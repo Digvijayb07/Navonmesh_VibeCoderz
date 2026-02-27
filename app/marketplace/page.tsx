@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/utils/supabase/client';
+import { haversineDistance, formatDistance, geocodeAddress } from '@/lib/geo';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface ProduceListing {
@@ -20,6 +21,13 @@ interface ProduceListing {
   location: string;
   status: string;
   created_at: string;
+  latitude: number | null;
+  longitude: number | null;
+  address: string | null;
+}
+
+interface ListingWithDistance extends ProduceListing {
+  _distance?: number; // km, computed client-side
 }
 
 interface ListingForm {
@@ -32,10 +40,27 @@ interface ListingForm {
   region: string;
   description: string;
   contactNumber: string;
+  // Location fields
+  addressLine: string;
+  city: string;
+  state: string;
+  pincode: string;
 }
 
 interface BuyForm {
   quantity_requested: string;
+}
+
+interface SellerCoords {
+  latitude: number | null;
+  longitude: number | null;
+  display_name: string;
+}
+
+interface BuyerLocation {
+  latitude: number;
+  longitude: number;
+  label: string;
 }
 
 const defaultListingForm: ListingForm = {
@@ -48,6 +73,10 @@ const defaultListingForm: ListingForm = {
   region: '',
   description: '',
   contactNumber: '',
+  addressLine: '',
+  city: '',
+  state: '',
+  pincode: '',
 };
 
 const defaultBuyForm: BuyForm = { quantity_requested: '' };
@@ -56,6 +85,13 @@ const defaultBuyForm: BuyForm = { quantity_requested: '' };
 const CROP_TYPES = ['Wheat', 'Rice', 'Corn', 'Sugarcane', 'Cotton', 'Vegetables', 'Pulses', 'Spices', 'Fruits', 'Other'];
 const REGIONS    = ['Punjab', 'Haryana', 'Madhya Pradesh', 'Delhi NCR', 'Uttar Pradesh', 'Gujarat', 'Maharashtra', 'Rajasthan', 'Bihar', 'Other'];
 const QUALITIES  = ['Grade A', 'Grade B', 'Premium', 'Organic Certified', 'Fresh', 'High Sugar Content', 'Standard'];
+const RADIUS_OPTIONS = [
+  { label: 'All distances', value: 0 },
+  { label: 'Within 10 km', value: 10 },
+  { label: 'Within 25 km', value: 25 },
+  { label: 'Within 50 km', value: 50 },
+  { label: 'Within 100 km', value: 100 },
+];
 
 function cropEmoji(name: string): string {
   const n = name.toLowerCase();
@@ -87,6 +123,11 @@ export default function MarketplacePage() {
   const [listLoading, setListLoading]     = useState(false);
   const [listError, setListError]         = useState<string | null>(null);
 
+  // Seller geocoding state
+  const [sellerCoords, setSellerCoords]   = useState<SellerCoords>({ latitude: null, longitude: null, display_name: '' });
+  const [geoLoading, setGeoLoading]       = useState(false);
+  const [geoError, setGeoError]           = useState<string | null>(null);
+
   // Buy-now modal
   const [showBuyModal, setShowBuyModal]   = useState(false);
   const [selectedListing, setSelectedListing] = useState<ProduceListing | null>(null);
@@ -99,6 +140,14 @@ export default function MarketplacePage() {
   const [searchQuery, setSearchQuery]   = useState('');
   const [filterRegion, setFilterRegion] = useState('');
   const [filterQuality, setFilterQuality] = useState('');
+
+  // Buyer location state
+  const [buyerLocation, setBuyerLocation]       = useState<BuyerLocation | null>(null);
+  const [buyerLocLoading, setBuyerLocLoading]   = useState(false);
+  const [buyerLocError, setBuyerLocError]       = useState<string | null>(null);
+  const [showManualAddress, setShowManualAddress] = useState(false);
+  const [manualAddress, setManualAddress]         = useState('');
+  const [radiusFilter, setRadiusFilter]           = useState(0); // 0 = all
 
   // ── Fetch listings ──────────────────────────────────────────────────────────
   const fetchListings = useCallback(async () => {
@@ -123,6 +172,121 @@ export default function MarketplacePage() {
 
   useEffect(() => { fetchListings(); }, [fetchListings]);
 
+  // ── Sorted & filtered listings by distance ─────────────────────────────────
+  const sortedListings: ListingWithDistance[] = useMemo(() => {
+    let items: ListingWithDistance[] = listings.map((l) => {
+      const item: ListingWithDistance = { ...l };
+      if (buyerLocation && l.latitude != null && l.longitude != null) {
+        item._distance = haversineDistance(
+          buyerLocation.latitude,
+          buyerLocation.longitude,
+          l.latitude,
+          l.longitude
+        );
+      }
+      return item;
+    });
+
+    // Apply radius filter
+    if (buyerLocation && radiusFilter > 0) {
+      items = items.filter((l) => l._distance !== undefined && l._distance <= radiusFilter);
+    }
+
+    // Sort by distance (nearest first) if buyer location exists
+    if (buyerLocation) {
+      items.sort((a, b) => {
+        // Listings with coords come first
+        if (a._distance !== undefined && b._distance !== undefined) return a._distance - b._distance;
+        if (a._distance !== undefined) return -1;
+        if (b._distance !== undefined) return 1;
+        return 0;
+      });
+    }
+
+    return items;
+  }, [listings, buyerLocation, radiusFilter]);
+
+  // ── Seller geocoding ────────────────────────────────────────────────────────
+  const handleGetCoordinates = async () => {
+    const parts = [
+      listForm.addressLine,
+      listForm.city,
+      listForm.state,
+      listForm.pincode,
+    ].filter(Boolean);
+
+    if (parts.length === 0) {
+      setGeoError('Please enter at least one address field.');
+      return;
+    }
+
+    setGeoLoading(true);
+    setGeoError(null);
+
+    const result = await geocodeAddress(parts.join(', '));
+    if (result) {
+      setSellerCoords({
+        latitude: result.latitude,
+        longitude: result.longitude,
+        display_name: result.display_name,
+      });
+      setGeoError(null);
+    } else {
+      setGeoError('Could not find coordinates for this address. Try a more specific address.');
+      setSellerCoords({ latitude: null, longitude: null, display_name: '' });
+    }
+    setGeoLoading(false);
+  };
+
+  // ── Buyer location — GPS ───────────────────────────────────────────────────
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      setBuyerLocError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setBuyerLocLoading(true);
+    setBuyerLocError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setBuyerLocation({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          label: `GPS (${pos.coords.latitude.toFixed(4)}°, ${pos.coords.longitude.toFixed(4)}°)`,
+        });
+        setBuyerLocLoading(false);
+      },
+      (err) => {
+        setBuyerLocError(
+          err.code === 1
+            ? 'Location permission denied. Please allow or enter manually.'
+            : 'Could not detect location. Please enter manually.'
+        );
+        setBuyerLocLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  // ── Buyer location — Manual address ────────────────────────────────────────
+  const handleManualGeocode = async () => {
+    if (!manualAddress.trim()) return;
+    setBuyerLocLoading(true);
+    setBuyerLocError(null);
+    const result = await geocodeAddress(manualAddress);
+    if (result) {
+      setBuyerLocation({
+        latitude: result.latitude,
+        longitude: result.longitude,
+        label: result.display_name.length > 50
+          ? result.display_name.slice(0, 50) + '…'
+          : result.display_name,
+      });
+    } else {
+      setBuyerLocError('Could not find this location. Try a more specific address.');
+    }
+    setBuyerLocLoading(false);
+  };
+
   // ── List-crop modal handlers ────────────────────────────────────────────────
   const handleListChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setListForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -138,6 +302,14 @@ export default function MarketplacePage() {
     // Ensure profile exists
     await supabase.from('profiles').upsert({ id: user.id }, { onConflict: 'id', ignoreDuplicates: true });
 
+    // Build full address string
+    const fullAddress = [
+      listForm.addressLine,
+      listForm.city,
+      listForm.state,
+      listForm.pincode,
+    ].filter(Boolean).join(', ');
+
     const { error } = await supabase.from('produce_listings').insert({
       farmer_id:     user.id,
       crop_name:     listForm.cropName,
@@ -147,6 +319,9 @@ export default function MarketplacePage() {
       quality_grade: listForm.quality,
       location:      listForm.region,
       status:        'available',
+      latitude:      sellerCoords.latitude,
+      longitude:     sellerCoords.longitude,
+      address:       fullAddress || null,
     });
 
     if (error) { setListError(error.message); setListLoading(false); return; }
@@ -160,6 +335,8 @@ export default function MarketplacePage() {
     setListSubmitted(false);
     setListError(null);
     setListForm(defaultListingForm);
+    setSellerCoords({ latitude: null, longitude: null, display_name: '' });
+    setGeoError(null);
   };
 
   // ── Buy-now modal handlers ──────────────────────────────────────────────────
@@ -214,6 +391,14 @@ export default function MarketplacePage() {
     setBuyForm(defaultBuyForm);
   };
 
+  // Spinner SVG helper
+  const Spinner = ({ className = 'h-4 w-4' }: { className?: string }) => (
+    <svg className={`animate-spin ${className}`} viewBox="0 0 24 24" fill="none">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+    </svg>
+  );
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <AppLayout>
@@ -228,6 +413,100 @@ export default function MarketplacePage() {
             + List Your Crops
           </Button>
         </div>
+
+        {/* ── Find Nearby Sellers ─────────────────────────────────────────── */}
+        <Card className="border-border">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">📍</span>
+              <h2 className="text-base font-semibold text-foreground">Find Nearby Sellers</h2>
+              {buyerLocation && (
+                <Badge variant="outline" className="bg-green-100/50 text-green-700 border-green-300 ml-auto text-xs">
+                  📍 Nearest First
+                </Badge>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDetectLocation}
+                disabled={buyerLocLoading}
+                className="gap-2"
+              >
+                {buyerLocLoading ? <Spinner /> : <span>📡</span>}
+                Detect My Location
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowManualAddress(!showManualAddress)}
+              >
+                ✏️ Enter Address Manually
+              </Button>
+
+              {buyerLocation && (
+                <>
+                  <select
+                    className="px-3 py-1.5 rounded-lg border border-border bg-background text-foreground text-sm"
+                    value={radiusFilter}
+                    onChange={(e) => setRadiusFilter(Number(e.target.value))}
+                  >
+                    {RADIUS_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground text-xs"
+                    onClick={() => {
+                      setBuyerLocation(null);
+                      setRadiusFilter(0);
+                      setBuyerLocError(null);
+                    }}
+                  >
+                    ✕ Clear Location
+                  </Button>
+                </>
+              )}
+            </div>
+
+            {/* Manual address input */}
+            {showManualAddress && (
+              <div className="flex gap-2 mt-3">
+                <Input
+                  placeholder="Enter your city, area, or full address..."
+                  className="flex-1"
+                  value={manualAddress}
+                  onChange={(e) => setManualAddress(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleManualGeocode(); } }}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleManualGeocode}
+                  disabled={buyerLocLoading || !manualAddress.trim()}
+                >
+                  {buyerLocLoading ? <Spinner /> : 'Search'}
+                </Button>
+              </div>
+            )}
+
+            {/* Location status */}
+            {buyerLocation && (
+              <p className="text-xs text-muted-foreground mt-2">
+                📍 Your location: <span className="font-medium text-foreground">{buyerLocation.label}</span>
+              </p>
+            )}
+            {buyerLocError && (
+              <p className="text-xs text-destructive mt-2">{buyerLocError}</p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Filters */}
         <div className="flex gap-4 flex-wrap">
@@ -248,10 +527,7 @@ export default function MarketplacePage() {
         {/* Loading */}
         {loadingData && (
           <div className="flex items-center justify-center py-24 text-muted-foreground gap-3">
-            <svg className="animate-spin h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-            </svg>
+            <Spinner className="h-6 w-6 text-primary" />
             Loading listings...
           </div>
         )}
@@ -266,21 +542,44 @@ export default function MarketplacePage() {
         )}
 
         {/* Empty State */}
-        {!loadingData && !fetchError && listings.length === 0 && (
+        {!loadingData && !fetchError && sortedListings.length === 0 && (
           <div className="text-center py-24 text-muted-foreground">
             <div className="text-6xl mb-4">🌱</div>
-            <p className="text-lg font-semibold text-foreground">No listings found</p>
-            <p className="text-sm mt-1">Be the first to list your crop!</p>
-            <Button className="mt-6 bg-primary hover:bg-primary/90" onClick={() => setShowListModal(true)}>
-              + List Your Crops
-            </Button>
+            <p className="text-lg font-semibold text-foreground">
+              {radiusFilter > 0 ? 'No listings within this radius' : 'No listings found'}
+            </p>
+            <p className="text-sm mt-1">
+              {radiusFilter > 0
+                ? 'Try increasing the distance radius or clearing the filter.'
+                : 'Be the first to list your crop!'}
+            </p>
+            {radiusFilter > 0 ? (
+              <Button className="mt-6" variant="outline" onClick={() => setRadiusFilter(0)}>
+                Show All Listings
+              </Button>
+            ) : (
+              <Button className="mt-6 bg-primary hover:bg-primary/90" onClick={() => setShowListModal(true)}>
+                + List Your Crops
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Section heading */}
+        {!loadingData && sortedListings.length > 0 && buyerLocation && (
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-foreground">Nearby Listings</h2>
+            <span className="text-sm text-muted-foreground">
+              — {sortedListings.length} result{sortedListings.length !== 1 ? 's' : ''}
+              {radiusFilter > 0 ? ` within ${radiusFilter} km` : ''}
+            </span>
           </div>
         )}
 
         {/* Crop Grid */}
-        {!loadingData && listings.length > 0 && (
+        {!loadingData && sortedListings.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.map((listing) => (
+            {sortedListings.map((listing) => (
               <Card key={listing.id} className="border-border overflow-hidden hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="text-5xl mb-4">{cropEmoji(listing.crop_name)}</div>
@@ -302,6 +601,13 @@ export default function MarketplacePage() {
                       <span className="text-muted-foreground">Region:</span>
                       <span className="text-foreground">{listing.location}</span>
                     </div>
+                    {/* Distance row */}
+                    {listing._distance !== undefined && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Distance:</span>
+                        <span className="font-semibold text-primary">{formatDistance(listing._distance)}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-4 flex gap-2 flex-wrap">
@@ -309,6 +615,11 @@ export default function MarketplacePage() {
                     <Badge variant="outline" className="bg-green-100/50 text-green-700 border-green-300">
                       ● Available
                     </Badge>
+                    {listing._distance !== undefined && listing._distance <= 25 && (
+                      <Badge variant="outline" className="bg-blue-100/50 text-blue-700 border-blue-300">
+                        📍 Nearby
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="mt-6 flex gap-2">
@@ -407,6 +718,67 @@ export default function MarketplacePage() {
                     {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
+
+                {/* ── Location Details Section ─────────────────────────────── */}
+                <div className="border-t border-border pt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base">📍</span>
+                    <h3 className="text-sm font-semibold text-foreground">Location Details</h3>
+                    <span className="text-xs text-muted-foreground">(for distance sorting)</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-foreground mb-1">Address / Village / Area</label>
+                      <Input name="addressLine" value={listForm.addressLine} onChange={handleListChange} placeholder="e.g. Grain Market, Sector 26" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-foreground mb-1">City</label>
+                        <Input name="city" value={listForm.city} onChange={handleListChange} placeholder="e.g. Chandigarh" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-foreground mb-1">State</label>
+                        <Input name="state" value={listForm.state} onChange={handleListChange} placeholder="e.g. Punjab" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 items-end">
+                      <div>
+                        <label className="block text-xs font-medium text-foreground mb-1">Pincode <span className="text-muted-foreground">(optional)</span></label>
+                        <Input name="pincode" value={listForm.pincode} onChange={handleListChange} placeholder="e.g. 160019" />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGetCoordinates}
+                        disabled={geoLoading}
+                        className="gap-2 h-9"
+                      >
+                        {geoLoading ? <Spinner /> : <span>🌐</span>}
+                        Get Coordinates
+                      </Button>
+                    </div>
+
+                    {/* Geocoding result */}
+                    {sellerCoords.latitude !== null && sellerCoords.longitude !== null && (
+                      <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 text-sm">
+                        <p className="font-medium text-green-700 dark:text-green-400 flex items-center gap-1">
+                          ✅ Coordinates found
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Lat: {sellerCoords.latitude.toFixed(6)}, Lng: {sellerCoords.longitude.toFixed(6)}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate" title={sellerCoords.display_name}>
+                          📍 {sellerCoords.display_name}
+                        </p>
+                      </div>
+                    )}
+                    {geoError && (
+                      <p className="text-xs text-destructive">{geoError}</p>
+                    )}
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Contact Number <span className="text-destructive">*</span></label>
                   <Input name="contactNumber" type="tel" value={listForm.contactNumber} onChange={handleListChange} placeholder="e.g. +91 98765 43210" required />
@@ -420,7 +792,7 @@ export default function MarketplacePage() {
                 <div className="flex gap-3 pt-2 pb-1">
                   <Button type="button" variant="outline" className="flex-1" onClick={closeListModal}>Cancel</Button>
                   <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={listLoading}>
-                    {listLoading ? <span className="flex items-center gap-2"><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Submitting...</span> : 'List Crop'}
+                    {listLoading ? <span className="flex items-center gap-2"><Spinner />Submitting...</span> : 'List Crop'}
                   </Button>
                 </div>
               </form>
@@ -469,6 +841,12 @@ export default function MarketplacePage() {
                     <p className="text-sm font-semibold text-primary mt-1">
                       ₹{selectedListing.price_per_kg}/{selectedListing.unit} · Available: {selectedListing.quantity} {selectedListing.unit}
                     </p>
+                    {/* Distance info in buy modal */}
+                    {buyerLocation && selectedListing.latitude != null && selectedListing.longitude != null && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        📍 {formatDistance(haversineDistance(buyerLocation.latitude, buyerLocation.longitude, selectedListing.latitude, selectedListing.longitude))}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -506,7 +884,7 @@ export default function MarketplacePage() {
                   <Button type="button" variant="outline" className="flex-1" onClick={closeBuyModal}>Cancel</Button>
                   <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={buyLoading}>
                     {buyLoading
-                      ? <span className="flex items-center gap-2"><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Sending...</span>
+                      ? <span className="flex items-center gap-2"><Spinner />Sending...</span>
                       : 'Send Buy Request'}
                   </Button>
                 </div>
