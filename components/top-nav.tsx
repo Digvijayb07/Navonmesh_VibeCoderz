@@ -1,15 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { createClient } from '@/utils/supabase/client';
-import { NotificationBell } from '@/components/notification-bell';
-import type { User } from '@supabase/supabase-js';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { createClient } from "@/utils/supabase/client";
+import { NotificationBell } from "@/components/notification-bell";
+import type { User } from "@supabase/supabase-js";
+import HindiToggle from "@/components/hindi-toggle";
+import { useRouter } from "next/navigation";
 
 export function TopNav() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const supabase = createClient();
@@ -22,7 +23,9 @@ export function TopNav() {
     });
 
     // Listen to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
@@ -31,15 +34,15 @@ export function TopNav() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    router.push('/login');
+    router.push("/login");
   };
 
   // Derive display name and avatar letter from user metadata or email
   const displayName =
     user?.user_metadata?.full_name ||
     user?.user_metadata?.name ||
-    user?.email?.split('@')[0] ||
-    'Account';
+    user?.email?.split("@")[0] ||
+    "Account";
 
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
@@ -61,7 +64,10 @@ export function TopNav() {
         <div className="flex items-center gap-4">
           {/* Notifications */}
           <NotificationBell userId={user?.id ?? null} />
-
+          <div className="flex items-center gap-3">
+            <HindiToggle />
+            {/* profile circle here */}
+          </div>
           {/* Messages */}
           <button
             className="p-2 hover:bg-secondary rounded-lg transition-colors"
@@ -95,7 +101,10 @@ export function TopNav() {
                   </div>
                 )}
                 <button
-                  onClick={() => { setMenuOpen(false); router.push('/profile'); }}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    router.push("/profile");
+                  }}
                   className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
                 >
                   👤 My Profile
