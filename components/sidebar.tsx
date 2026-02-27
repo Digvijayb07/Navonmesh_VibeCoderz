@@ -1,8 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/utils/supabase/client';
 
 const menuItems = [
   { icon: '📊', label: 'Dashboard', href: '/' },
@@ -18,6 +20,26 @@ const menuItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [trustScore, setTrustScore] = useState<number | null>(null);
+  const [role, setRole] = useState<string>('Farmer');
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('trust_score, role')
+        .eq('id', data.user.id)
+        .single();
+      if (profile) {
+        setTrustScore(profile.trust_score ?? 50);
+        if (profile.role) setRole(profile.role.charAt(0).toUpperCase() + profile.role.slice(1));
+      }
+    });
+  }, []);
+
+  const scoreDisplay = trustScore !== null ? (trustScore / 20).toFixed(1) : '—';
 
   return (
     <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col h-screen">
@@ -58,10 +80,10 @@ export function Sidebar() {
       <div className="p-4 border-t border-sidebar-border">
         <div className="bg-sidebar-accent/20 rounded-lg p-3 text-center">
           <p className="text-xs text-sidebar-foreground/70">
-            Connected as Farmer
+            Connected as {role}
           </p>
           <p className="text-xs font-semibold text-sidebar-foreground mt-1">
-            Trust Score: 4.8/5
+            Trust Score: {scoreDisplay}/5
           </p>
         </div>
       </div>

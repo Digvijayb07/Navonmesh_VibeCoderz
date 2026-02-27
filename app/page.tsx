@@ -1,5 +1,6 @@
 import { AppLayout } from '@/components/app-layout';
 import { StatCard } from '@/components/stat-card';
+import { TrustScoreStat } from '@/components/trust-score-stat';
 import { PriceChart } from '@/components/price-chart';
 import { MarketAlerts } from '@/components/market-alerts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,13 +31,7 @@ export default function DashboardPage() {
             subtitle="Awaiting your approval"
             trend={5}
           />
-          <StatCard
-            icon="⭐"
-            title="Trust Score"
-            value="4.8/5"
-            subtitle="Based on 156 transactions"
-            trend={8}
-          />
+          <TrustScoreStat />
           <StatCard
             icon="💰"
             title="Revenue (This Month)"

@@ -20,6 +20,10 @@ interface ProduceListing {
   location: string;
   status: string;
   created_at: string;
+  profiles?: {
+    trust_score: number | null;
+    full_name: string | null;
+  };
 }
 
 interface ListingForm {
@@ -110,7 +114,7 @@ export default function MarketplacePage() {
 
     let query = supabase
       .from('produce_listings')
-      .select('*')
+      .select('*, profiles!farmer_id(trust_score, full_name)')
       .eq('status', 'available')
       .order('created_at', { ascending: false });
 
@@ -120,7 +124,16 @@ export default function MarketplacePage() {
 
     const { data, error } = await query;
     if (error) setFetchError(error.message);
-    else setListings(data ?? []);
+    else {
+      // Sort by farmer trust score (descending), then by created_at (descending)
+      const sorted = (data ?? []).sort((a: ProduceListing, b: ProduceListing) => {
+        const scoreA = a.profiles?.trust_score ?? 50;
+        const scoreB = b.profiles?.trust_score ?? 50;
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      setListings(sorted);
+    }
     setLoadingData(false);
   }, [filterRegion, filterQuality, searchQuery]);
 
@@ -291,9 +304,14 @@ export default function MarketplacePage() {
                 <CardContent className="p-6">
                   <div className="text-5xl mb-4">{cropEmoji(listing.crop_name)}</div>
                   <h3 className="text-xl font-bold text-foreground">{listing.crop_name}</h3>
-                  <p className="text-xs text-muted-foreground mt-1 font-mono truncate">
-                    ID: {listing.farmer_id.slice(0, 8)}…
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xs text-muted-foreground font-mono truncate">
+                      {listing.profiles?.full_name ?? `ID: ${listing.farmer_id.slice(0, 8)}…`}
+                    </p>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-yellow-100/50 text-yellow-700 border-yellow-300">
+                      ⭐ {((listing.profiles?.trust_score ?? 50) / 20).toFixed(1)}/5
+                    </Badge>
+                  </div>
 
                   <div className="mt-4 space-y-2">
                     <div className="flex justify-between text-sm">

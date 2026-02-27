@@ -70,6 +70,32 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// ── Trust Score Helper ────────────────────────────────────────────────────────
+async function updateTrustScore(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  outcome: 'completed' | 'failed'
+) {
+  // Fetch current counters
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('total_completed, total_failed')
+    .eq('id', userId)
+    .single();
+
+  if (!profile) return;
+
+  const completed = (profile.total_completed ?? 0) + (outcome === 'completed' ? 1 : 0);
+  const failed    = (profile.total_failed ?? 0)    + (outcome === 'failed' ? 1 : 0);
+  const total     = completed + failed;
+  const score     = total > 0 ? (completed / total) * 100 : 50;
+
+  await supabase
+    .from('profiles')
+    .update({ trust_score: score, total_completed: completed, total_failed: failed })
+    .eq('id', userId);
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function ExchangePage() {
   const supabase = createClient();
@@ -182,6 +208,19 @@ export default function ExchangePage() {
                 .eq('id', exchange.listing_id);
             }
           }
+
+          // ── Update trust scores for both parties ──
+          const farmerId = exchange.produce_listings?.farmer_id;
+          if (farmerId) await updateTrustScore(supabase, farmerId, 'completed');
+          await updateTrustScore(supabase, exchange.buyer_id, 'completed');
+        }
+      }
+
+      // Penalize buyer trust on rejection (farmer rejecting is legitimate)
+      if (newStatus === 'rejected') {
+        const exchange = exchanges.find((ex) => ex.id === id);
+        if (exchange) {
+          await updateTrustScore(supabase, exchange.buyer_id, 'failed');
         }
       }
     }
