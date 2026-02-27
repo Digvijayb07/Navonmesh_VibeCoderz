@@ -10,6 +10,7 @@ import HowItWorks from "@/components/sections/HowItWorks";
 import Marketplace from "@/components/sections/Marketplace";
 import TrustSecurity from "@/components/sections/TrustSecurity";
 import AnalyticsDashboard from "@/components/sections/AnalyticsDashboard";
+import Logistics from "@/components/sections/Logistics";
 import Testimonials from "@/components/sections/Testimonials";
 import Button from "@/components/ui/Button";
 import SectionWrapper from "@/components/ui/SectionWrapper";
@@ -24,6 +25,7 @@ export default function Home() {
         <Features />
         <HowItWorks />
         <Marketplace />
+        <Logistics />
         <TrustSecurity />
         <AnalyticsDashboard />
         <Testimonials />

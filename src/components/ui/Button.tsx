@@ -9,6 +9,7 @@ interface ButtonProps {
   className?: string;
   onClick?: () => void;
   href?: string;
+  disabled?: boolean;
 }
 
 export default function Button({
@@ -18,9 +19,10 @@ export default function Button({
   className = "",
   onClick,
   href,
+  disabled = false,
 }: ButtonProps) {
   const baseStyles =
-    "inline-flex items-center justify-center font-semibold rounded-full transition-all duration-400 cursor-pointer";
+    "inline-flex items-center justify-center font-semibold rounded-full transition-all duration-400 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none";
 
   const variants = {
     primary:
@@ -48,7 +50,7 @@ export default function Button({
   }
 
   return (
-    <button onClick={onClick} className={combinedClass}>
+    <button onClick={onClick} className={combinedClass} disabled={disabled}>
       {children}
     </button>
   );

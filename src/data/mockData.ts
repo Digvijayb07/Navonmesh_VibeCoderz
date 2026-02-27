@@ -221,6 +221,7 @@ export const navLinks = [
   { label: "Features", href: "#features" },
   { label: "How It Works", href: "#how-it-works" },
   { label: "Marketplace", href: "#marketplace" },
+  { label: "Logistics", href: "#logistics" },
   { label: "Dashboard", href: "#dashboard" },
   { label: "Contact", href: "#footer" },
 ];
