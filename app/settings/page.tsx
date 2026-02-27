@@ -1,9 +1,27 @@
+"use client";
+
+import { useState } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 export default function SettingsPage() {
+  // Profile state
+  const [farmName, setFarmName] = useState("Ram Kumar Farms");
+  const [email, setEmail] = useState("ram@farmlink.com");
+  const [phone, setPhone] = useState("+91 98765 43210");
+
+  // Location state
+  const [state, setState] = useState("Punjab");
+  const [district, setDistrict] = useState("Amritsar");
+
+  // Privacy state
+  const [notifications, setNotifications] = useState({
+    profileVisibility: true,
+    emailNotifications: true,
+    marketingComms: true,
+  });
   return (
     <AppLayout>
       <div className="p-8 space-y-8 max-w-2xl">
@@ -21,15 +39,28 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div>
               <label className="text-sm font-semibold text-foreground">Farm Name</label>
-              <Input value="Ram Kumar Farms" className="mt-2" />
+              <Input 
+                value={farmName} 
+                onChange={(e) => setFarmName(e.target.value)}
+                className="mt-2" 
+              />
             </div>
             <div>
               <label className="text-sm font-semibold text-foreground">Email</label>
-              <Input value="ram@farmlink.com" type="email" className="mt-2" />
+              <Input 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)}
+                type="email" 
+                className="mt-2" 
+              />
             </div>
             <div>
               <label className="text-sm font-semibold text-foreground">Phone</label>
-              <Input value="+91 98765 43210" className="mt-2" />
+              <Input 
+                value={phone} 
+                onChange={(e) => setPhone(e.target.value)}
+                className="mt-2" 
+              />
             </div>
             <Button className="bg-primary">Save Changes</Button>
           </CardContent>
@@ -44,7 +75,11 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div>
               <label className="text-sm font-semibold text-foreground">State</label>
-              <select className="w-full mt-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground">
+              <select 
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                className="w-full mt-2 px-4 py-2 rounded-lg border border-border bg-background text-foreground"
+              >
                 <option>Punjab</option>
                 <option>Haryana</option>
                 <option>Madhya Pradesh</option>
@@ -52,7 +87,11 @@ export default function SettingsPage() {
             </div>
             <div>
               <label className="text-sm font-semibold text-foreground">District</label>
-              <Input value="Amritsar" className="mt-2" />
+              <Input 
+                value={district} 
+                onChange={(e) => setDistrict(e.target.value)}
+                className="mt-2" 
+              />
             </div>
             <Button className="bg-primary">Update Location</Button>
           </CardContent>
@@ -66,16 +105,24 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {[
-              { label: 'Profile Visibility', desc: 'Allow other farmers to see your profile' },
-              { label: 'Email Notifications', desc: 'Receive emails for new inquiries and messages' },
-              { label: 'Marketing Communications', desc: 'Receive promotional updates and tips' },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+              { key: 'profileVisibility', label: 'Profile Visibility', desc: 'Allow other farmers to see your profile' },
+              { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive emails for new inquiries and messages' },
+              { key: 'marketingComms', label: 'Marketing Communications', desc: 'Receive promotional updates and tips' },
+            ].map((item) => (
+              <div key={item.key} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
                 <div>
                   <p className="font-medium text-foreground">{item.label}</p>
                   <p className="text-xs text-muted-foreground">{item.desc}</p>
                 </div>
-                <input type="checkbox" className="w-5 h-5" defaultChecked />
+                <input 
+                  type="checkbox" 
+                  className="w-5 h-5"
+                  checked={notifications[item.key as keyof typeof notifications]}
+                  onChange={(e) => setNotifications(prev => ({
+                    ...prev,
+                    [item.key]: e.target.checked
+                  }))}
+                />
               </div>
             ))}
           </CardContent>
