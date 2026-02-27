@@ -46,6 +46,8 @@ export default function ProfilePage() {
   const [userCreatedAt, setUserCreatedAt] = useState<string>('');
   const [userId, setUserId] = useState<string>('');
   const [avatarLetter, setAvatarLetter] = useState('U');
+  // track whether the user's email is confirmed
+  const [emailVerified, setEmailVerified] = useState(false);
 
   // Editable fields
   const [fullName, setFullName] = useState('');
@@ -79,6 +81,8 @@ export default function ProfilePage() {
     setUserId(user.id);
     setUserEmail(user.email ?? '');
     setUserCreatedAt(user.created_at);
+    // email_confirmed_at is set by Supabase when the user verifies via email
+    setEmailVerified(!!user.email_confirmed_at);
 
     const displayName =
       user.user_metadata?.full_name ??
@@ -227,6 +231,10 @@ export default function ProfilePage() {
     ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1)
     : 'Farmer';
   const phoneVerified = profile?.phone_verified === true;
+  const identityVerified = phoneVerified && emailVerified;
+  // combine email & phone verification for progress
+  const stepsCompleted = (emailVerified ? 1 : 0) + (phoneVerified ? 1 : 0);
+  const progressWidth = `${(stepsCompleted / 3) * 100}%`;
   const registeredSince = userCreatedAt
     ? new Date(userCreatedAt).toLocaleDateString('en-IN', {
         month: 'long',
@@ -259,7 +267,7 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className="p-8 space-y-8 max-w-4xl">
+      <div className="p-8 space-y-8 max-w-4xl mx-auto">
         {/* Page Header */}
         <div>
           <h1 className="text-3xl font-bold text-foreground">My Profile</h1>
@@ -285,12 +293,11 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-3 flex-wrap">
                   <h2 className="text-2xl font-bold text-foreground">{fullName || 'Your Name'}</h2>
                   <Badge className={`${tier.bg} ${tier.color} border`}>{tier.label} Member</Badge>
-                  {phoneVerified && (
+                  {identityVerified ? (
                     <Badge className="bg-green-500/10 text-green-600 border border-green-500/30">
                       ✓ Verified
                     </Badge>
-                  )}
-                  {!phoneVerified && (
+                  ) : (
                     <Badge className="bg-orange-500/10 text-orange-600 border border-orange-500/30">
                       ⚠ Unverified
                     </Badge>
@@ -338,8 +345,12 @@ export default function ProfilePage() {
                   Identity Verification
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  {phoneVerified
-                    ? 'Your phone number has been verified. Your profile is trusted.'
+                  {phoneVerified && emailVerified
+                    ? 'Your email and phone are verified. Your profile is trusted.'
+                    : phoneVerified
+                    ? 'Your phone number has been verified. Complete email verification for full trust.'
+                    : emailVerified
+                    ? 'Your email is verified. Verify your phone via OTP to increase trust.'
                     : 'Verify your phone number via OTP to increase trust and unlock all features.'}
                 </CardDescription>
               </div>
@@ -357,12 +368,20 @@ export default function ProfilePage() {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex items-center gap-3 p-3 bg-background rounded-lg border border-border">
-                <span className="text-2xl">📧</span>
-                <div>
+                <span className="text-2xl flex-shrink-0">📧</span>
+                <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Email</p>
                   <p className="text-sm font-medium text-foreground truncate">{userEmail}</p>
                 </div>
-                <Badge className="ml-auto bg-green-500/10 text-green-600 border border-green-500/30 text-[10px]">Verified</Badge>
+                <Badge
+                  className={`ml-auto flex-shrink-0 text-[10px] ${
+                    emailVerified
+                      ? 'bg-green-500/10 text-green-600 border border-green-500/30'
+                      : 'bg-orange-500/10 text-orange-600 border border-orange-500/30'
+                  }`}
+                >
+                  {emailVerified ? 'Verified' : 'Unverified'}
+                </Badge>
               </div>
               <div className="flex items-center gap-3 p-3 bg-background rounded-lg border border-border">
                 <span className="text-2xl">📱</span>
@@ -390,20 +409,26 @@ export default function ProfilePage() {
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-foreground">Verification Progress</span>
-                <span className="text-sm text-muted-foreground">{phoneVerified ? '2' : '1'}/3 steps</span>
+                <span className="text-sm text-muted-foreground">{stepsCompleted}/3 steps</span>
               </div>
               <div className="w-full bg-muted rounded-full h-2.5">
                 <div
                   className="bg-gradient-to-r from-primary to-accent rounded-full h-2.5 transition-all duration-500"
-                  style={{ width: phoneVerified ? '66%' : '33%' }}
+                  style={{ width: progressWidth }}
                 />
               </div>
-              <div className="flex justify-between mt-2 text-[10px] text-muted-foreground">
-                <span className="text-green-600 font-semibold">Email ✓</span>
-                <span className={phoneVerified ? 'text-green-600 font-semibold' : ''}>
+              <div className="flex justify-between gap-2 mt-2 text-[10px] text-muted-foreground flex-wrap">
+                <span
+                  className={`${emailVerified ? 'text-green-600 font-semibold' : ''} whitespace-nowrap`}
+                >
+                  Email {emailVerified ? '✓' : '○'}
+                </span>
+                <span
+                  className={`${phoneVerified ? 'text-green-600 font-semibold' : ''} whitespace-nowrap`}
+                >
                   Phone {phoneVerified ? '✓' : '○'}
                 </span>
-                <span>KYC ○</span>
+                <span className="whitespace-nowrap">KYC ○</span>
               </div>
             </div>
           </CardContent>
