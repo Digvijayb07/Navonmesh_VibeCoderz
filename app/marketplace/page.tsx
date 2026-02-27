@@ -36,6 +36,9 @@ interface ListingForm {
 
 interface BuyForm {
   quantity_requested: string;
+  offer_crop_name: string;
+  offer_quantity: string;
+  offer_unit: string;
 }
 
 const defaultListingForm: ListingForm = {
@@ -50,7 +53,7 @@ const defaultListingForm: ListingForm = {
   contactNumber: '',
 };
 
-const defaultBuyForm: BuyForm = { quantity_requested: '' };
+const defaultBuyForm: BuyForm = { quantity_requested: '', offer_crop_name: '', offer_quantity: '', offer_unit: 'kg' };
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const CROP_TYPES = ['Wheat', 'Rice', 'Corn', 'Sugarcane', 'Cotton', 'Vegetables', 'Pulses', 'Spices', 'Fruits', 'Other'];
@@ -171,7 +174,7 @@ export default function MarketplacePage() {
     setShowBuyModal(true);
   };
 
-  const handleBuyChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+  const handleBuyChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setBuyForm((p) => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleBuySubmit = async (e: React.FormEvent) => {
@@ -198,6 +201,9 @@ export default function MarketplacePage() {
       listing_id:         selectedListing.id,
       buyer_id:           user.id,
       quantity_requested: qty,
+      offer_crop_name:    buyForm.offer_crop_name || null,
+      offer_quantity:     buyForm.offer_quantity ? parseFloat(buyForm.offer_quantity) : null,
+      offer_unit:         buyForm.offer_unit || null,
       status:             'pending',
     });
 
@@ -453,7 +459,9 @@ export default function MarketplacePage() {
                 <h3 className="text-2xl font-bold text-foreground">Request Sent!</h3>
                 <p className="text-muted-foreground mt-2 max-w-xs">
                   Your request for <span className="font-semibold text-foreground">{buyForm.quantity_requested} {selectedListing.unit}</span> of{' '}
-                  <span className="font-semibold text-foreground">{selectedListing.crop_name}</span> has been submitted.
+                  <span className="font-semibold text-foreground">{selectedListing.crop_name}</span>{' '}
+                  in exchange for <span className="font-semibold text-foreground">{buyForm.offer_quantity} {buyForm.offer_unit}</span> of{' '}
+                  <span className="font-semibold text-foreground">{buyForm.offer_crop_name}</span> has been submitted.
                   Track it in <span className="font-semibold">Exchanges</span>.
                 </p>
                 <Button className="mt-8 bg-primary hover:bg-primary/90" onClick={closeBuyModal}>Back to Marketplace</Button>
@@ -500,6 +508,57 @@ export default function MarketplacePage() {
                       </span>
                     </p>
                   )}
+                </div>
+
+                {/* Barter Offer */}
+                <div className="rounded-xl bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 p-4 space-y-3">
+                  <p className="text-sm font-semibold text-foreground">🔄 What will you offer in exchange?</p>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      Crop to Offer <span className="text-destructive">*</span>
+                    </label>
+                    <select
+                      name="offer_crop_name"
+                      value={buyForm.offer_crop_name}
+                      onChange={handleBuyChange}
+                      required
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      <option value="">Select crop</option>
+                      {CROP_TYPES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">
+                        Quantity <span className="text-destructive">*</span>
+                      </label>
+                      <Input
+                        name="offer_quantity"
+                        type="number"
+                        min="1"
+                        step="0.01"
+                        value={buyForm.offer_quantity}
+                        onChange={handleBuyChange}
+                        placeholder="e.g. 100"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">Unit</label>
+                      <select
+                        name="offer_unit"
+                        value={buyForm.offer_unit}
+                        onChange={handleBuyChange}
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      >
+                        <option value="kg">kg</option>
+                        <option value="quintal">Quintal</option>
+                        <option value="ton">Ton</option>
+                        <option value="piece">Piece</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-1">

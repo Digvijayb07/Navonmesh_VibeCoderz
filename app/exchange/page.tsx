@@ -13,6 +13,9 @@ interface ExchangeRequest {
   listing_id: string;
   buyer_id: string;
   quantity_requested: number;
+  offer_crop_name: string | null;
+  offer_quantity: number | null;
+  offer_unit: string | null;
   status: 'pending' | 'accepted' | 'rejected' | 'in_transit' | 'completed';
   created_at: string;
   produce_listings?: {
@@ -244,7 +247,7 @@ export default function ExchangePage() {
               return (
                 <Card key={ex.id} className="border-border hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 items-center">
 
                       {/* Crop Info */}
                       <div className="flex items-center gap-3">
@@ -259,7 +262,7 @@ export default function ExchangePage() {
 
                       {/* Order Details */}
                       <div className="space-y-1">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase">Order Details</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">Wants</p>
                         <p className="font-semibold text-foreground">
                           {ex.quantity_requested} {crop?.unit ?? 'units'}
                         </p>
@@ -269,6 +272,24 @@ export default function ExchangePage() {
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground">{formatDate(ex.created_at)}</p>
+                      </div>
+
+                      {/* Barter Offer */}
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">Offering In Exchange</p>
+                        {ex.offer_crop_name ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">{cropEmoji(ex.offer_crop_name)}</span>
+                            <div>
+                              <p className="font-semibold text-foreground">{ex.offer_crop_name}</p>
+                              <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
+                                {ex.offer_quantity} {ex.offer_unit}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic">No offer specified</p>
+                        )}
                       </div>
 
                       {/* Requested By */}
