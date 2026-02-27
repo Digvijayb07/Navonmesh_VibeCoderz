@@ -24,14 +24,14 @@ interface ProduceListing {
   latitude: number | null;
   longitude: number | null;
   address: string | null;
-  profiles?: {
-  trust_score: number | null;
-  full_name: string | null;
+   profiles?: {
+    trust_score: number | null;
+    full_name: string | null;
   };
 }
 
 interface ListingWithDistance extends ProduceListing {
-  _distance?: number; 
+  _distance?: number; // km, computed client-side
 }
 
 interface ListingForm {
@@ -44,7 +44,6 @@ interface ListingForm {
   region: string;
   description: string;
   contactNumber: string;
-  // Location field
   sellerAddress: string;
 }
 
