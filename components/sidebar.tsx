@@ -101,7 +101,7 @@ export function Sidebar() {
                   color: isActive ? "white" : item.color,
                 }}
               >
-                {item.svgIcon}
+                {item.icon}
               </span>
               <span>{item.label}</span>
             </Link>
