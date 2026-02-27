@@ -40,11 +40,8 @@ interface ListingForm {
   region: string;
   description: string;
   contactNumber: string;
-  // Location fields
-  addressLine: string;
-  city: string;
-  state: string;
-  pincode: string;
+  // Location field
+  sellerAddress: string;
 }
 
 interface BuyForm {
@@ -73,10 +70,7 @@ const defaultListingForm: ListingForm = {
   region: '',
   description: '',
   contactNumber: '',
-  addressLine: '',
-  city: '',
-  state: '',
-  pincode: '',
+  sellerAddress: '',
 };
 
 const defaultBuyForm: BuyForm = { quantity_requested: '' };
@@ -127,6 +121,7 @@ export default function MarketplacePage() {
   const [sellerCoords, setSellerCoords]   = useState<SellerCoords>({ latitude: null, longitude: null, display_name: '' });
   const [geoLoading, setGeoLoading]       = useState(false);
   const [geoError, setGeoError]           = useState<string | null>(null);
+  const [showSellerManualAddress, setShowSellerManualAddress] = useState(false);
 
   // Buy-now modal
   const [showBuyModal, setShowBuyModal]   = useState(false);
@@ -206,33 +201,52 @@ export default function MarketplacePage() {
     return items;
   }, [listings, buyerLocation, radiusFilter]);
 
-  // ── Seller geocoding ────────────────────────────────────────────────────────
-  const handleGetCoordinates = async () => {
-    const parts = [
-      listForm.addressLine,
-      listForm.city,
-      listForm.state,
-      listForm.pincode,
-    ].filter(Boolean);
-
-    if (parts.length === 0) {
-      setGeoError('Please enter at least one address field.');
+  // ── Seller location — GPS ───────────────────────────────────────────────────
+  const handleSellerDetectLocation = () => {
+    if (!navigator.geolocation) {
+      setGeoError('Geolocation is not supported by your browser.');
       return;
     }
-
     setGeoLoading(true);
     setGeoError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setSellerCoords({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          display_name: `GPS (${pos.coords.latitude.toFixed(4)}°, ${pos.coords.longitude.toFixed(4)}°)`,
+        });
+        setGeoLoading(false);
+      },
+      (err) => {
+        setGeoError(
+          err.code === 1
+            ? 'Location permission denied. Please allow or enter address manually.'
+            : 'Could not detect location. Please enter address manually.'
+        );
+        setGeoLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
-    const result = await geocodeAddress(parts.join(', '));
+  // ── Seller location — Manual address geocoding ─────────────────────────────
+  const handleSellerManualGeocode = async () => {
+    if (!listForm.sellerAddress.trim()) {
+      setGeoError('Please enter your address.');
+      return;
+    }
+    setGeoLoading(true);
+    setGeoError(null);
+    const result = await geocodeAddress(listForm.sellerAddress);
     if (result) {
       setSellerCoords({
         latitude: result.latitude,
         longitude: result.longitude,
         display_name: result.display_name,
       });
-      setGeoError(null);
     } else {
-      setGeoError('Could not find coordinates for this address. Try a more specific address.');
+      setGeoError('Could not find this location. Try a more specific address.');
       setSellerCoords({ latitude: null, longitude: null, display_name: '' });
     }
     setGeoLoading(false);
@@ -302,14 +316,6 @@ export default function MarketplacePage() {
     // Ensure profile exists
     await supabase.from('profiles').upsert({ id: user.id }, { onConflict: 'id', ignoreDuplicates: true });
 
-    // Build full address string
-    const fullAddress = [
-      listForm.addressLine,
-      listForm.city,
-      listForm.state,
-      listForm.pincode,
-    ].filter(Boolean).join(', ');
-
     const { error } = await supabase.from('produce_listings').insert({
       farmer_id:     user.id,
       crop_name:     listForm.cropName,
@@ -319,9 +325,9 @@ export default function MarketplacePage() {
       quality_grade: listForm.quality,
       location:      listForm.region,
       status:        'available',
-      latitude:      sellerCoords.latitude,
-      longitude:     sellerCoords.longitude,
-      address:       fullAddress || null,
+      latitude:      sellerCoords.latitude ?? null,
+      longitude:     sellerCoords.longitude ?? null,
+      address:       listForm.sellerAddress.trim() || sellerCoords.display_name || null,
     });
 
     if (error) { setListError(error.message); setListLoading(false); return; }
@@ -336,6 +342,7 @@ export default function MarketplacePage() {
     setListError(null);
     setListForm(defaultListingForm);
     setSellerCoords({ latitude: null, longitude: null, display_name: '' });
+    setShowSellerManualAddress(false);
     setGeoError(null);
   };
 
@@ -724,59 +731,84 @@ export default function MarketplacePage() {
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-base">📍</span>
                     <h3 className="text-sm font-semibold text-foreground">Location Details</h3>
-                    <span className="text-xs text-muted-foreground">(for distance sorting)</span>
+                    <span className="text-xs text-muted-foreground">(helps buyers find you nearby)</span>
                   </div>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-foreground mb-1">Address / Village / Area</label>
-                      <Input name="addressLine" value={listForm.addressLine} onChange={handleListChange} placeholder="e.g. Grain Market, Sector 26" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-foreground mb-1">City</label>
-                        <Input name="city" value={listForm.city} onChange={handleListChange} placeholder="e.g. Chandigarh" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-foreground mb-1">State</label>
-                        <Input name="state" value={listForm.state} onChange={handleListChange} placeholder="e.g. Punjab" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 items-end">
-                      <div>
-                        <label className="block text-xs font-medium text-foreground mb-1">Pincode <span className="text-muted-foreground">(optional)</span></label>
-                        <Input name="pincode" value={listForm.pincode} onChange={handleListChange} placeholder="e.g. 160019" />
-                      </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSellerDetectLocation}
+                      disabled={geoLoading}
+                      className="gap-2"
+                    >
+                      {geoLoading && !showSellerManualAddress ? <Spinner /> : <span>📡</span>}
+                      Detect My Location
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSellerManualAddress(!showSellerManualAddress)}
+                    >
+                      ✏️ Enter Address Manually
+                    </Button>
+
+                    {sellerCoords.latitude !== null && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground text-xs"
+                        onClick={() => {
+                          setSellerCoords({ latitude: null, longitude: null, display_name: '' });
+                          setGeoError(null);
+                        }}
+                      >
+                        ✕ Clear
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Manual address input */}
+                  {showSellerManualAddress && (
+                    <div className="flex gap-2 mt-3">
+                      <Input
+                        name="sellerAddress"
+                        placeholder="Enter your village, city, or full address..."
+                        className="flex-1"
+                        value={listForm.sellerAddress}
+                        onChange={handleListChange}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSellerManualGeocode(); } }}
+                      />
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={handleGetCoordinates}
-                        disabled={geoLoading}
-                        className="gap-2 h-9"
+                        onClick={handleSellerManualGeocode}
+                        disabled={geoLoading || !listForm.sellerAddress.trim()}
                       >
-                        {geoLoading ? <Spinner /> : <span>🌐</span>}
-                        Get Coordinates
+                        {geoLoading && showSellerManualAddress ? <Spinner /> : 'Search'}
                       </Button>
                     </div>
+                  )}
 
-                    {/* Geocoding result */}
-                    {sellerCoords.latitude !== null && sellerCoords.longitude !== null && (
-                      <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 text-sm">
-                        <p className="font-medium text-green-700 dark:text-green-400 flex items-center gap-1">
-                          ✅ Coordinates found
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Lat: {sellerCoords.latitude.toFixed(6)}, Lng: {sellerCoords.longitude.toFixed(6)}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate" title={sellerCoords.display_name}>
-                          📍 {sellerCoords.display_name}
-                        </p>
-                      </div>
-                    )}
-                    {geoError && (
-                      <p className="text-xs text-destructive">{geoError}</p>
-                    )}
-                  </div>
+                  {/* Location result */}
+                  {sellerCoords.latitude !== null && sellerCoords.longitude !== null && (
+                    <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 text-sm mt-3">
+                      <p className="font-medium text-green-700 dark:text-green-400 flex items-center gap-1">
+                        ✅ Location set
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1 truncate" title={sellerCoords.display_name}>
+                        📍 {sellerCoords.display_name}
+                      </p>
+                    </div>
+                  )}
+                  {geoError && (
+                    <p className="text-xs text-destructive mt-2">{geoError}</p>
+                  )}
                 </div>
 
                 <div>
