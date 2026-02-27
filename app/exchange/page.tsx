@@ -157,6 +157,33 @@ export default function ExchangePage() {
           });
         }
       }
+
+      // Deduct quantity from produce listing when trade is completed
+      if (newStatus === 'completed') {
+        const exchange = exchanges.find((ex) => ex.id === id);
+        if (exchange) {
+          const { data: listing } = await supabase
+            .from('produce_listings')
+            .select('quantity')
+            .eq('id', exchange.listing_id)
+            .single();
+
+          if (listing) {
+            const newQty = listing.quantity - exchange.quantity_requested;
+            if (newQty <= 0) {
+              await supabase
+                .from('produce_listings')
+                .update({ quantity: 0, status: 'sold_out' })
+                .eq('id', exchange.listing_id);
+            } else {
+              await supabase
+                .from('produce_listings')
+                .update({ quantity: newQty })
+                .eq('id', exchange.listing_id);
+            }
+          }
+        }
+      }
     }
     setActionLoading(null);
   };
