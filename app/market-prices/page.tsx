@@ -75,7 +75,7 @@ export default function MarketPricesPage() {
         </div>
 
         {/* Regional Price Comparison Chart */}
-        <Card className="border-border">
+        {/* <Card className="border-border">
           <CardHeader>
             <CardTitle>Regional Price Comparison</CardTitle>
             <CardDescription>Average crop prices across major regions</CardDescription>
@@ -101,7 +101,7 @@ export default function MarketPricesPage() {
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Price History Table */}
         <Card className="border-border">

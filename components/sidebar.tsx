@@ -8,6 +8,7 @@ import { createClient } from '@/utils/supabase/client';
 
 const menuItems = [
   { icon: '📊', label: 'Dashboard', href: '/' },
+  { icon: '👤', label: 'My Profile', href: '/profile' },
   { icon: '🛒', label: 'Marketplace', href: '/marketplace' },
   { icon: '🤝', label: 'Exchange', href: '/exchange' },
   { icon: '🚚', label: 'Logistics', href: '/logistics' },

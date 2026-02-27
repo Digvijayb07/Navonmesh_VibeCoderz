@@ -95,6 +95,12 @@ export function TopNav() {
                   </div>
                 )}
                 <button
+                  onClick={() => { setMenuOpen(false); router.push('/profile'); }}
+                  className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                >
+                  👤 My Profile
+                </button>
+                <button
                   onClick={handleSignOut}
                   className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-secondary transition-colors"
                 >
