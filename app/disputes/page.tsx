@@ -9,13 +9,22 @@ import { createClient } from "@/utils/supabase/client";
 
 type Dispute = {
   id: string;
-  against: string;
+  filed_by: string;
+  against_user_id: string;
+  against_user_name?: string;
+  filed_by_name?: string;
   issue: string;
   date: string;
   status: string;
   resolution?: string;
   created_at?: string;
-  };
+};
+
+type Profile = {
+  id: string;
+  full_name: string;
+  role: string;
+};
 
 export default function DisputesPage() {
   const supabase = createClient();
@@ -25,9 +34,12 @@ export default function DisputesPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
-  const [against, setAgainst] = useState("");
+  const [againstUserId, setAgainstUserId] = useState("");
   const [issue, setIssue] = useState("");
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
+
+  const [users, setUsers] = useState<Profile[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -37,7 +49,43 @@ export default function DisputesPage() {
   const handleClose = () => {
     setShowForm(false);
     setSubmitError(null);
+    setAgainstUserId("");
+    setIssue("");
   };
+
+  // ================= FETCH CURRENT USER =================
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, [supabase]);
+
+  // ================= FETCH USERS =================
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, full_name, role")
+          .order("full_name");
+
+        if (error) {
+          console.error("Error fetching users:", error);
+        } else if (data) {
+          setUsers(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch users");
+      }
+    };
+    fetchUsers();
+  }, [supabase]);
 
   // ================= FETCH FROM SUPABASE =================
   const fetchDisputes = useCallback(async () => {
@@ -47,7 +95,13 @@ export default function DisputesPage() {
     try {
       const { data, error } = await supabase
         .from("disputes")
-        .select("*")
+        .select(
+          `
+          *,
+          filed_by_profile:profiles!disputes_filed_by_fkey(full_name),
+          against_user_profile:profiles!disputes_against_user_id_fkey(full_name)
+        `,
+        )
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -55,6 +109,8 @@ export default function DisputesPage() {
       } else if (data) {
         const formatted = data.map((d: any) => ({
           ...d,
+          filed_by_name: d.filed_by_profile?.full_name || "Unknown",
+          against_user_name: d.against_user_profile?.full_name || "Unknown",
           date: new Date(d.created_at).toLocaleDateString(),
         }));
         setDisputes(formatted);
@@ -70,12 +126,11 @@ export default function DisputesPage() {
     fetchDisputes();
   }, [fetchDisputes]);
 
-
   // ================= ADD DISPUTE =================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!against.trim() || !issue.trim()) {
-      setSubmitError("Please fill in both fields");
+    if (!againstUserId || !issue.trim()) {
+      setSubmitError("Please select a user and provide issue details");
       return;
     }
 
@@ -83,26 +138,25 @@ export default function DisputesPage() {
     setSubmitError(null);
 
     try {
-      const { data, error } = await supabase
-        .from("disputes")
-        .insert([
-          {
-            against: against.trim(),
-            issue: issue.trim(),
-            status: "raised",
-          },
-        ])
-        .select();
+      const response = await fetch("/api/file-dispute", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          against_user_id: againstUserId,
+          issue: issue.trim(),
+        }),
+      });
 
-      if (error) {
-        setSubmitError(error.message);
-      } else if (data && data[0]) {
-        const newDispute = {
-          ...data[0],
-          date: new Date(data[0].created_at).toLocaleDateString(),
-        };
-        setDisputes((prev) => [newDispute, ...prev]);
-        setAgainst("");
+      const result = await response.json();
+
+      if (!response.ok) {
+        setSubmitError(result.error || "Failed to file dispute");
+      } else {
+        // Refresh the disputes list
+        await fetchDisputes();
+        setAgainstUserId("");
         setIssue("");
         setShowForm(false);
       }
@@ -153,7 +207,11 @@ export default function DisputesPage() {
           <Button variant="default" size="sm" onClick={handleOpen}>
             + File New Dispute
           </Button>
-          <Button variant="outline" size="sm" onClick={clearResolved} disabled={clearLoading}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearResolved}
+            disabled={clearLoading}>
             {clearLoading ? "Clearing..." : "Clear Resolved"}
           </Button>
         </div>
@@ -164,8 +222,7 @@ export default function DisputesPage() {
             <svg
               className="animate-spin h-6 w-6 text-primary"
               viewBox="0 0 24 24"
-              fill="none"
-            >
+              fill="none">
               <circle
                 className="opacity-25"
                 cx="12"
@@ -219,10 +276,9 @@ export default function DisputesPage() {
                     dispute.status === "raised"
                       ? "border-blue-300 bg-blue-50"
                       : ""
-                  }`}
-              >
+                  }`}>
                 <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center text-center">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-center text-center">
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground">
                         ID
@@ -234,10 +290,19 @@ export default function DisputesPage() {
 
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground">
+                        Filed By
+                      </p>
+                      <p className="text-sm text-foreground">
+                        {dispute.filed_by_name}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground">
                         Against
                       </p>
                       <p className="text-sm text-foreground">
-                        {dispute.against}
+                        {dispute.against_user_name}
                       </p>
                     </div>
 
@@ -254,10 +319,9 @@ export default function DisputesPage() {
                           dispute.status === "resolved"
                             ? "bg-green-100 text-green-800 border-green-300"
                             : dispute.status === "in-mediation"
-                            ? "bg-yellow-100 text-yellow-800 border-yellow-300"
-                            : "bg-blue-100 text-blue-800 border-blue-300"
-                        }
-                      >
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-300"
+                              : "bg-blue-100 text-blue-800 border-blue-300"
+                        }>
                         {dispute.status}
                       </Badge>
                       <p className="text-xs text-muted-foreground mt-2">
@@ -277,8 +341,7 @@ export default function DisputesPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleView(dispute)}
-                    >
+                      onClick={() => handleView(dispute)}>
                       View Details
                     </Button>
                   </div>
@@ -291,11 +354,13 @@ export default function DisputesPage() {
         {/* FORM MODAL */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40" onClick={handleClose} />
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={handleClose}
+            />
             <form
               onSubmit={handleSubmit}
-              className="relative z-10 w-full max-w-lg bg-white rounded-lg p-6 shadow-xl"
-            >
+              className="relative z-10 w-full max-w-lg bg-white rounded-lg p-6 shadow-xl">
               <h3 className="text-lg font-bold mb-4">File New Dispute</h3>
 
               {submitError && (
@@ -306,15 +371,23 @@ export default function DisputesPage() {
 
               <label className="block mb-3">
                 <div className="text-xs text-muted-foreground mb-1">
-                  Against (User / Entity)
+                  Against (Select User)
                 </div>
-                <input
-                  value={against}
-                  onChange={(e) => setAgainst(e.target.value)}
-                  placeholder="Enter user or entity name"
-                  className="w-full px-3 py-2 border border-border rounded-md"
+                <select
+                  value={againstUserId}
+                  onChange={(e) => setAgainstUserId(e.target.value)}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-white"
                   disabled={submitLoading}
-                />
+                  required>
+                  <option value="">-- Select a user --</option>
+                  {users
+                    .filter((u) => u.id !== currentUserId)
+                    .map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.full_name} ({user.role})
+                      </option>
+                    ))}
+                </select>
               </label>
 
               <label className="block mb-3">
@@ -332,10 +405,19 @@ export default function DisputesPage() {
               </label>
 
               <div className="flex justify-end gap-3">
-                <Button variant="outline" size="sm" onClick={handleClose} type="button" disabled={submitLoading}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClose}
+                  type="button"
+                  disabled={submitLoading}>
                   Cancel
                 </Button>
-                <Button variant="default" size="sm" type="submit" disabled={submitLoading}>
+                <Button
+                  variant="default"
+                  size="sm"
+                  type="submit"
+                  disabled={submitLoading}>
                   {submitLoading ? "Submitting..." : "Submit Dispute"}
                 </Button>
               </div>
@@ -354,7 +436,10 @@ export default function DisputesPage() {
                 <strong>ID:</strong> {selectedDispute.id}
               </p>
               <p>
-                <strong>Against:</strong> {selectedDispute.against}
+                <strong>Filed By:</strong> {selectedDispute.filed_by_name}
+              </p>
+              <p>
+                <strong>Against:</strong> {selectedDispute.against_user_name}
               </p>
               <p>
                 <strong>Issue:</strong> {selectedDispute.issue}
@@ -369,10 +454,9 @@ export default function DisputesPage() {
                     selectedDispute.status === "resolved"
                       ? "bg-green-100 text-green-800 border-green-300"
                       : selectedDispute.status === "in-mediation"
-                      ? "bg-yellow-100 text-yellow-800 border-yellow-300"
-                      : "bg-blue-100 text-blue-800 border-blue-300"
-                  }
-                >
+                        ? "bg-yellow-100 text-yellow-800 border-yellow-300"
+                        : "bg-blue-100 text-blue-800 border-blue-300"
+                  }>
                   {selectedDispute.status}
                 </Badge>
               </p>
@@ -394,4 +478,4 @@ export default function DisputesPage() {
       )}
     </AppLayout>
   );
-  }
+}
