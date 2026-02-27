@@ -1,0 +1,214 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8faf5;
+  --foreground: #1a2e05;
+  --green-50: #f0fdf4;
+  --green-100: #dcfce7;
+  --green-200: #bbf7d0;
+  --green-300: #86efac;
+  --green-400: #4ade80;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+  --green-800: #166534;
+  --green-900: #14532d;
+  --earth-50: #fefce8;
+  --earth-100: #fef9c3;
+  --earth-200: #fef08a;
+  --earth-300: #fde047;
+  --earth-400: #facc15;
+  --earth-500: #eab308;
+  --amber-50: #fffbeb;
+  --amber-100: #fef3c7;
+  --warm-50: #faf5f0;
+  --warm-100: #f5ebe0;
+  --warm-200: #e8d5c4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-green-50: var(--green-50);
+  --color-green-100: var(--green-100);
+  --color-green-200: var(--green-200);
+  --color-green-300: var(--green-300);
+  --color-green-400: var(--green-400);
+  --color-green-500: var(--green-500);
+  --color-green-600: var(--green-600);
+  --color-green-700: var(--green-700);
+  --color-green-800: var(--green-800);
+  --color-green-900: var(--green-900);
+  --color-earth-50: var(--earth-50);
+  --color-earth-100: var(--earth-100);
+  --color-earth-200: var(--earth-200);
+  --color-earth-300: var(--earth-300);
+  --color-earth-400: var(--earth-400);
+  --color-earth-500: var(--earth-500);
+  --color-amber-50: var(--amber-50);
+  --color-amber-100: var(--amber-100);
+  --color-warm-50: var(--warm-50);
+  --color-warm-100: var(--warm-100);
+  --color-warm-200: var(--warm-200);
+  --font-sans: "Inter", "Poppins", system-ui, -apple-system, sans-serif;
+  --font-heading: "Poppins", "Inter", system-ui, -apple-system, sans-serif;
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-float-delayed: float 6s ease-in-out 2s infinite;
+  --animate-float-slow: float 8s ease-in-out 1s infinite;
+  --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+  --animate-gradient-shift: gradient-shift 8s ease infinite;
+  --animate-spin-slow: spin 20s linear infinite;
+  --animate-bounce-gentle: bounce-gentle 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(3deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(34, 197, 94, 0.4); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes bounce-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-dark {
+  background: rgba(20, 83, 45, 0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(34, 197, 94, 0.15);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(22, 163, 74, 0.08);
+}
+
+/* Gradient utilities */
+.gradient-green {
+  background: linear-gradient(135deg, #16a34a, #22c55e, #4ade80);
+}
+
+.gradient-green-dark {
+  background: linear-gradient(135deg, #14532d, #15803d, #16a34a);
+}
+
+.gradient-hero {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 25%, #bbf7d0 50%, #f0fdf4 75%, #fefce8 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift 12s ease infinite;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #15803d, #16a34a, #22c55e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Button gradient animation */
+.btn-gradient {
+  background: linear-gradient(135deg, #16a34a, #22c55e, #15803d);
+  background-size: 200% 200%;
+  transition: all 0.4s ease;
+}
+
+.btn-gradient:hover {
+  background-position: 100% 100%;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(22, 163, 74, 0.35);
+}
+
+/* Glow border effect */
+.glow-border {
+  position: relative;
+}
+
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #22c55e, #4ade80, #16a34a);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+
+.glow-border:hover::before {
+  opacity: 1;
+}
+
+/* Card hover */
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(22, 163, 74, 0.15);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--green-50);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #22c55e, #16a34a);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #16a34a, #15803d);
+}
+
+/* Section pattern overlay */
+.pattern-dots {
+  background-image: radial-gradient(circle, rgba(22, 163, 74, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.pattern-grid {
+  background-image: 
+    linear-gradient(rgba(22, 163, 74, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(22, 163, 74, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
