@@ -36,6 +36,9 @@ export function TopNav() {
     router.push("/login");
   };
 
+  const avatarUrl =
+    user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+
   // Derive display name and avatar letter from user metadata or email
   const displayName =
     user?.user_metadata?.full_name ||
@@ -95,10 +98,21 @@ export function TopNav() {
               title="User Menu"
               onClick={() => setMenuOpen((prev) => !prev)}
             >
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white text-sm font-bold shadow-md shadow-green-500/20">
-                {avatarLetter}
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary flex items-center justify-center">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="User"
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <span className="text-primary-foreground font-bold text-sm">
+                    {avatarLetter}
+                  </span>
+                )}
               </div>
-              <span className="text-sm font-medium text-green-800 max-w-[120px] truncate hidden sm:inline">
+              <span className="text-sm font-medium text-foreground max-w-[120px] truncate">
                 {displayName}
               </span>
               <svg
