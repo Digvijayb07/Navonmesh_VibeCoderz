@@ -35,6 +35,9 @@ interface ProduceListing {
   latitude: number | null;
   longitude: number | null;
   address: string | null;
+  listing_type: "crop" | "tool";
+  condition: string | null;
+  rental_price_per_day: number | null;
   profiles?: {
     trust_score: number | null;
     full_name: string | null;
@@ -46,6 +49,7 @@ interface ListingWithDistance extends ProduceListing {
 }
 
 interface ListingForm {
+  listingType: "crop" | "tool";
   cropName: string;
   cropType: string;
   quantity: string;
@@ -56,13 +60,19 @@ interface ListingForm {
   description: string;
   contactNumber: string;
   sellerAddress: string;
+  // Tool-specific fields
+  toolCondition: string;
+  rentalPricePerDay: string;
 }
 
 interface BuyForm {
   quantity_requested: string;
+  offer_type: "crop" | "tool";
   offer_crop_name: string;
   offer_quantity: string;
   offer_unit: string;
+  // Tool offer fields
+  offer_tool_condition: string;
 }
 
 interface SellerCoords {
@@ -78,6 +88,7 @@ interface BuyerLocation {
 }
 
 const defaultListingForm: ListingForm = {
+  listingType: "crop",
   cropName: "",
   cropType: "",
   quantity: "",
@@ -88,13 +99,17 @@ const defaultListingForm: ListingForm = {
   description: "",
   contactNumber: "",
   sellerAddress: "",
+  toolCondition: "",
+  rentalPricePerDay: "",
 };
 
 const defaultBuyForm: BuyForm = {
   quantity_requested: "",
+  offer_type: "crop",
   offer_crop_name: "",
   offer_quantity: "",
   offer_unit: "kg",
+  offer_tool_condition: "",
 };
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -110,6 +125,19 @@ const CROP_TYPES = [
   "Fruits",
   "Other",
 ];
+const TOOL_TYPES = [
+  "Tractor",
+  "Harvester",
+  "Plough",
+  "Seed Drill",
+  "Sprayer",
+  "Thresher",
+  "Rotavator",
+  "Trailer",
+  "Water Pump",
+  "Other",
+];
+const TOOL_CONDITIONS = ["New", "Good", "Fair", "Needs Repair"];
 const REGIONS = [
   "Punjab",
   "Haryana",
@@ -139,8 +167,22 @@ const RADIUS_OPTIONS = [
   { label: "Within 100 km", value: 100 },
 ];
 
-function cropEmoji(name: string): string {
+type ListingTypeFilter = "all" | "crop" | "tool";
+
+function itemEmoji(name: string, listingType: "crop" | "tool" = "crop"): string {
   const n = name.toLowerCase();
+  if (listingType === "tool") {
+    if (n.includes("tractor")) return "🚜";
+    if (n.includes("harvest")) return "🌾";
+    if (n.includes("plough") || n.includes("plow")) return "⚙️";
+    if (n.includes("drill")) return "🔧";
+    if (n.includes("spray")) return "💨";
+    if (n.includes("thresh")) return "🔄";
+    if (n.includes("rotavator")) return "⚙️";
+    if (n.includes("trailer")) return "🚛";
+    if (n.includes("pump") || n.includes("water")) return "💧";
+    return "🔧";
+  }
   if (n.includes("wheat")) return "🌾";
   if (n.includes("rice")) return "🍚";
   if (n.includes("corn") || n.includes("maize")) return "🌽";
@@ -193,6 +235,7 @@ export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRegion, setFilterRegion] = useState("");
   const [filterQuality, setFilterQuality] = useState("");
+  const [filterType, setFilterType] = useState<ListingTypeFilter>("all");
 
   // Buyer location state
   const [buyerLocation, setBuyerLocation] = useState<BuyerLocation | null>(
@@ -215,6 +258,7 @@ export default function MarketplacePage() {
       .eq("status", "available")
       .order("created_at", { ascending: false });
 
+    if (filterType !== "all") query = query.eq("listing_type", filterType);
     if (filterRegion) query = query.eq("location", filterRegion);
     if (filterQuality) query = query.eq("quality_grade", filterQuality);
     if (searchQuery) query = query.ilike("crop_name", `%${searchQuery}%`);
@@ -236,7 +280,7 @@ export default function MarketplacePage() {
       setListings(sorted);
     }
     setLoadingData(false);
-  }, [filterRegion, filterQuality, searchQuery]);
+  }, [filterRegion, filterQuality, filterType, searchQuery]);
 
   useEffect(() => {
     fetchListings();
@@ -408,13 +452,19 @@ export default function MarketplacePage() {
       .from("profiles")
       .upsert({ id: user.id }, { onConflict: "id", ignoreDuplicates: true });
 
+    const isTool = listForm.listingType === "tool";
     const { error } = await supabase.from("produce_listings").insert({
       farmer_id: user.id,
+      listing_type: listForm.listingType,
       crop_name: listForm.cropName,
-      quantity: parseFloat(listForm.quantity),
-      unit: listForm.unit,
+      quantity: isTool ? 1 : parseFloat(listForm.quantity),
+      unit: isTool ? "piece" : listForm.unit,
       price_per_kg: parseFloat(listForm.price),
-      quality_grade: listForm.quality,
+      quality_grade: isTool ? null : listForm.quality,
+      condition: isTool ? listForm.toolCondition : null,
+      rental_price_per_day: isTool && listForm.rentalPricePerDay
+        ? parseFloat(listForm.rentalPricePerDay)
+        : null,
       location: listForm.region,
       status: "available",
       latitude: sellerCoords.latitude ?? null,
@@ -490,11 +540,12 @@ export default function MarketplacePage() {
       listing_id: selectedListing.id,
       buyer_id: user.id,
       quantity_requested: qty,
+      offer_type: buyForm.offer_type,
       offer_crop_name: buyForm.offer_crop_name || null,
-      offer_quantity: buyForm.offer_quantity
+      offer_quantity: buyForm.offer_type === "crop" && buyForm.offer_quantity
         ? parseFloat(buyForm.offer_quantity)
         : null,
-      offer_unit: buyForm.offer_unit || null,
+      offer_unit: buyForm.offer_type === "crop" ? (buyForm.offer_unit || null) : "piece",
       status: "pending",
     });
 
@@ -547,15 +598,34 @@ export default function MarketplacePage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">Marketplace</h1>
             <p className="text-muted-foreground mt-2">
-              Browse and purchase crops from trusted farmers
+              Browse and exchange crops, tools &amp; equipment
             </p>
           </div>
           <Button
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
             onClick={() => setShowListModal(true)}
           >
-            + List Your Crops
+            + List Item
           </Button>
+        </div>
+
+        {/* Category filter tabs */}
+        <div className="flex gap-2">
+          {([
+            { label: "All", value: "all" as ListingTypeFilter },
+            { label: "🌾 Crops", value: "crop" as ListingTypeFilter },
+            { label: "🚜 Tools & Equipment", value: "tool" as ListingTypeFilter },
+          ]).map((tab) => (
+            <Button
+              key={tab.value}
+              variant="outline"
+              size="sm"
+              onClick={() => setFilterType(tab.value)}
+              className={filterType === tab.value ? "bg-primary/10 border-primary text-primary" : ""}
+            >
+              {tab.label}
+            </Button>
+          ))}
         </div>
 
         {/* ── Find Nearby Sellers ─────────────────────────────────────────── */}
@@ -790,12 +860,20 @@ export default function MarketplacePage() {
               >
                 <CardContent className="p-6">
                   <div className="text-5xl mb-4">
-                    {cropEmoji(listing.crop_name)}
+                    {itemEmoji(listing.crop_name, listing.listing_type)}
                   </div>
                   <h3 className="text-xl font-bold text-foreground">
                     {listing.crop_name}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
+                    <Badge
+                      variant="outline"
+                      className={listing.listing_type === "tool"
+                        ? "text-[10px] px-1.5 py-0 bg-orange-100/50 text-orange-700 border-orange-300"
+                        : "text-[10px] px-1.5 py-0 bg-emerald-100/50 text-emerald-700 border-emerald-300"}
+                    >
+                      {listing.listing_type === "tool" ? "🚜 Tool" : "🌾 Crop"}
+                    </Badge>
                     <p className="text-xs text-muted-foreground font-mono truncate">
                       {listing.profiles?.full_name ??
                         `ID: ${listing.farmer_id.slice(0, 8)}…`}
@@ -811,18 +889,34 @@ export default function MarketplacePage() {
                   </div>
 
                   <div className="mt-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Quantity:</span>
-                      <span className="font-semibold text-foreground">
-                        {listing.quantity} {listing.unit}
-                      </span>
-                    </div>
+                    {listing.listing_type === "crop" && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Quantity:</span>
+                        <span className="font-semibold text-foreground">
+                          {listing.quantity} {listing.unit}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Price:</span>
                       <span className="font-bold text-primary">
-                        ₹{listing.price_per_kg}/{listing.unit}
+                        ₹{listing.price_per_kg}/{listing.listing_type === "tool" ? "piece" : listing.unit}
                       </span>
                     </div>
+                    {listing.listing_type === "tool" && listing.rental_price_per_day && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Rental:</span>
+                        <span className="font-bold text-orange-600">
+                          ₹{listing.rental_price_per_day}/day
+                        </span>
+                      </div>
+                    )}
+                    {listing.listing_type === "tool" && listing.condition && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Condition:</span>
+                        <span className="text-foreground">{listing.condition}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Region:</span>
                       <span className="text-foreground">
@@ -841,9 +935,11 @@ export default function MarketplacePage() {
                   </div>
 
                   <div className="mt-4 flex gap-2 flex-wrap">
-                    <Badge variant="outline" className="bg-secondary/50">
-                      {listing.quality_grade}
-                    </Badge>
+                    {listing.listing_type === "crop" && listing.quality_grade && (
+                      <Badge variant="outline" className="bg-secondary/50">
+                        {listing.quality_grade}
+                      </Badge>
+                    )}
                     <Badge
                       variant="outline"
                       className="bg-green-100/50 text-green-700 border-green-300"
@@ -866,7 +962,7 @@ export default function MarketplacePage() {
                       className="flex-1 bg-primary hover:bg-primary/90"
                       onClick={() => openBuyModal(listing)}
                     >
-                      Buy Now
+                      {listing.listing_type === "tool" ? "Exchange" : "Buy Now"}
                     </Button>
                     <Button variant="outline" className="flex-1">
                       Contact
@@ -880,7 +976,7 @@ export default function MarketplacePage() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          LIST CROP MODAL
+          LIST ITEM MODAL
       ══════════════════════════════════════════════════════════════════════ */}
       {showListModal && (
         <div
@@ -893,10 +989,10 @@ export default function MarketplacePage() {
             <div className="flex items-center justify-between px-6 py-5 border-b border-border sticky top-0 bg-background z-10">
               <div>
                 <h2 className="text-xl font-bold text-foreground">
-                  List Your Crop
+                  {listForm.listingType === "tool" ? "List a Tool / Equipment" : "List Your Crop"}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Fill in the details to list your crop
+                  Fill in the details to list your {listForm.listingType === "tool" ? "tool" : "crop"}
                 </p>
               </div>
               <button
@@ -917,7 +1013,7 @@ export default function MarketplacePage() {
                   <span className="font-semibold text-foreground">
                     {listForm.cropName}
                   </span>{" "}
-                  is now visible to buyers.
+                  is now visible on the marketplace.
                 </p>
                 <Button
                   className="mt-8 bg-primary hover:bg-primary/90"
@@ -933,21 +1029,51 @@ export default function MarketplacePage() {
                     {listError}
                   </div>
                 )}
+
+                {/* Listing type toggle */}
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
-                    Crop Name <span className="text-destructive">*</span>
+                    What are you listing? <span className="text-destructive">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <button type="button"
+                      onClick={() => setListForm(p => ({ ...p, listingType: "crop" }))}
+                      className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                        listForm.listingType === "crop"
+                          ? "bg-primary/10 border-primary text-primary"
+                          : "border-border text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      🌾 Crop
+                    </button>
+                    <button type="button"
+                      onClick={() => setListForm(p => ({ ...p, listingType: "tool" }))}
+                      className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${
+                        listForm.listingType === "tool"
+                          ? "bg-primary/10 border-primary text-primary"
+                          : "border-border text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      🚜 Tool / Equipment
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                    {listForm.listingType === "tool" ? "Tool Name" : "Crop Name"} <span className="text-destructive">*</span>
                   </label>
                   <Input
                     name="cropName"
                     value={listForm.cropName}
                     onChange={handleListChange}
-                    placeholder="e.g. Premium Basmati Rice"
+                    placeholder={listForm.listingType === "tool" ? "e.g. Mahindra 575 Tractor" : "e.g. Premium Basmati Rice"}
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
-                    Crop Type <span className="text-destructive">*</span>
+                    {listForm.listingType === "tool" ? "Tool Type" : "Crop Type"} <span className="text-destructive">*</span>
                   </label>
                   <select
                     name="cropType"
@@ -956,49 +1082,75 @@ export default function MarketplacePage() {
                     required
                     className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   >
-                    <option value="">Select crop type</option>
-                    {CROP_TYPES.map((c) => (
+                    <option value="">Select {listForm.listingType === "tool" ? "tool type" : "crop type"}</option>
+                    {(listForm.listingType === "tool" ? TOOL_TYPES : CROP_TYPES).map((c) => (
                       <option key={c} value={c}>
                         {c}
                       </option>
                     ))}
                   </select>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">
-                      Quantity <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      name="quantity"
-                      type="number"
-                      min="1"
-                      value={listForm.quantity}
-                      onChange={handleListChange}
-                      placeholder="e.g. 500"
-                      required
-                    />
+
+                {/* Crop-only: quantity + unit */}
+                {listForm.listingType === "crop" && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">
+                        Quantity <span className="text-destructive">*</span>
+                      </label>
+                      <Input
+                        name="quantity"
+                        type="number"
+                        min="1"
+                        value={listForm.quantity}
+                        onChange={handleListChange}
+                        placeholder="e.g. 500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">
+                        Unit
+                      </label>
+                      <select
+                        name="unit"
+                        value={listForm.unit}
+                        onChange={handleListChange}
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      >
+                        <option value="kg">kg</option>
+                        <option value="quintal">Quintal</option>
+                        <option value="ton">Ton</option>
+                        <option value="piece">Piece</option>
+                      </select>
+                    </div>
                   </div>
+                )}
+
+                {/* Tool-only: condition */}
+                {listForm.listingType === "tool" && (
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">
-                      Unit
+                      Condition <span className="text-destructive">*</span>
                     </label>
                     <select
-                      name="unit"
-                      value={listForm.unit}
+                      name="toolCondition"
+                      value={listForm.toolCondition}
                       onChange={handleListChange}
+                      required
                       className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                     >
-                      <option value="kg">kg</option>
-                      <option value="quintal">Quintal</option>
-                      <option value="ton">Ton</option>
-                      <option value="piece">Piece</option>
+                      <option value="">Select condition</option>
+                      {TOOL_CONDITIONS.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
                     </select>
                   </div>
-                </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
-                    Price per {listForm.unit} (₹){" "}
+                    {listForm.listingType === "tool" ? "Price (₹)" : `Price per ${listForm.unit} (₹)`}{" "}
                     <span className="text-destructive">*</span>
                   </label>
                   <Input
@@ -1007,29 +1159,50 @@ export default function MarketplacePage() {
                     min="1"
                     value={listForm.price}
                     onChange={handleListChange}
-                    placeholder="e.g. 25"
+                    placeholder={listForm.listingType === "tool" ? "e.g. 50000" : "e.g. 25"}
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
-                    Quality Grade <span className="text-destructive">*</span>
-                  </label>
-                  <select
-                    name="quality"
-                    value={listForm.quality}
-                    onChange={handleListChange}
-                    required
-                    className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="">Select quality</option>
-                    {QUALITIES.map((q) => (
-                      <option key={q} value={q}>
-                        {q}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+
+                {/* Tool-only: rental price */}
+                {listForm.listingType === "tool" && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      Rental Price per Day (₹) <span className="text-xs text-muted-foreground">(optional)</span>
+                    </label>
+                    <Input
+                      name="rentalPricePerDay"
+                      type="number"
+                      min="1"
+                      value={listForm.rentalPricePerDay}
+                      onChange={handleListChange}
+                      placeholder="e.g. 2000 — leave empty if not for rent"
+                    />
+                  </div>
+                )}
+
+                {/* Crop-only: quality grade */}
+                {listForm.listingType === "crop" && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      Quality Grade <span className="text-destructive">*</span>
+                    </label>
+                    <select
+                      name="quality"
+                      value={listForm.quality}
+                      onChange={handleListChange}
+                      required
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      <option value="">Select quality</option>
+                      {QUALITIES.map((q) => (
+                        <option key={q} value={q}>
+                          {q}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
                     Region <span className="text-destructive">*</span>
@@ -1208,7 +1381,7 @@ export default function MarketplacePage() {
                         Submitting...
                       </span>
                     ) : (
-                      "List Crop"
+                      listForm.listingType === "tool" ? "List Tool" : "List Crop"
                     )}
                   </Button>
                 </div>
@@ -1232,10 +1405,10 @@ export default function MarketplacePage() {
             <div className="flex items-center justify-between px-6 py-5 border-b border-border">
               <div>
                 <h2 className="text-xl font-bold text-foreground">
-                  Place Buy Request
+                  {selectedListing.listing_type === "tool" ? "Place Exchange Request" : "Place Buy Request"}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Submit a purchase request to the farmer
+                  Submit a request to the {selectedListing.listing_type === "tool" ? "owner" : "farmer"}
                 </p>
               </div>
               <button
@@ -1281,10 +1454,10 @@ export default function MarketplacePage() {
               </div>
             ) : (
               <form onSubmit={handleBuySubmit} className="px-6 py-6 space-y-5">
-                {/* Crop Summary */}
+                {/* Item Summary */}
                 <div className="rounded-xl bg-secondary/30 border border-border p-4 flex gap-4 items-center">
                   <span className="text-4xl">
-                    {cropEmoji(selectedListing.crop_name)}
+                    {itemEmoji(selectedListing.crop_name, selectedListing.listing_type)}
                   </span>
                   <div>
                     <p className="font-bold text-foreground">
@@ -1292,13 +1465,17 @@ export default function MarketplacePage() {
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {selectedListing.location} ·{" "}
-                      {selectedListing.quality_grade}
+                      {selectedListing.listing_type === "tool" ? selectedListing.condition : selectedListing.quality_grade}
                     </p>
                     <p className="text-sm font-semibold text-primary mt-1">
-                      ₹{selectedListing.price_per_kg}/{selectedListing.unit} ·
-                      Available: {selectedListing.quantity}{" "}
-                      {selectedListing.unit}
+                      ₹{selectedListing.price_per_kg}/{selectedListing.listing_type === "tool" ? "piece" : selectedListing.unit}
+                      {selectedListing.listing_type === "crop" && <> · Available: {selectedListing.quantity} {selectedListing.unit}</>}
                     </p>
+                    {selectedListing.listing_type === "tool" && selectedListing.rental_price_per_day && (
+                      <p className="text-sm font-semibold text-orange-600 mt-0.5">
+                        ₹{selectedListing.rental_price_per_day}/day rental
+                      </p>
+                    )}
                     {/* Distance info in buy modal */}
                     {buyerLocation &&
                       selectedListing.latitude != null &&
@@ -1325,44 +1502,73 @@ export default function MarketplacePage() {
                 )}
 
                 {/* Quantity Requested */}
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
-                    Quantity to Buy ({selectedListing.unit}){" "}
-                    <span className="text-destructive">*</span>
-                  </label>
-                  <Input
-                    name="quantity_requested"
-                    type="number"
-                    min="1"
-                    max={selectedListing.quantity}
-                    step="0.01"
-                    value={buyForm.quantity_requested}
-                    onChange={handleBuyChange}
-                    placeholder={`Max: ${selectedListing.quantity} ${selectedListing.unit}`}
-                    required
-                  />
-                  {buyForm.quantity_requested && (
-                    <p className="text-xs text-muted-foreground mt-1.5">
-                      Estimated total:{" "}
-                      <span className="font-semibold text-foreground">
-                        ₹
-                        {(
-                          parseFloat(buyForm.quantity_requested || "0") *
-                          selectedListing.price_per_kg
-                        ).toLocaleString("en-IN")}
-                      </span>
-                    </p>
-                  )}
-                </div>
+                {selectedListing.listing_type === "crop" ? (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      Quantity to Buy ({selectedListing.unit}){" "}
+                      <span className="text-destructive">*</span>
+                    </label>
+                    <Input
+                      name="quantity_requested"
+                      type="number"
+                      min="1"
+                      max={selectedListing.quantity}
+                      step="0.01"
+                      value={buyForm.quantity_requested}
+                      onChange={handleBuyChange}
+                      placeholder={`Max: ${selectedListing.quantity} ${selectedListing.unit}`}
+                      required
+                    />
+                    {buyForm.quantity_requested && (
+                      <p className="text-xs text-muted-foreground mt-1.5">
+                        Estimated total:{" "}
+                        <span className="font-semibold text-foreground">
+                          ₹
+                          {(
+                            parseFloat(buyForm.quantity_requested || "0") *
+                            selectedListing.price_per_kg
+                          ).toLocaleString("en-IN")}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <input type="hidden" name="quantity_requested" value="1" />
+                )}
 
                 {/* Barter Offer */}
                 <div className="rounded-xl bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 p-4 space-y-3">
                   <p className="text-sm font-semibold text-foreground">
                     🔄 What will you offer in exchange?
                   </p>
+
+                  {/* Offer type toggle */}
+                  <div className="flex gap-2">
+                    <button type="button"
+                      onClick={() => setBuyForm(p => ({ ...p, offer_type: "crop", offer_crop_name: "" }))}
+                      className={`flex-1 py-1.5 px-3 rounded-lg border text-xs font-medium transition-colors ${
+                        buyForm.offer_type === "crop"
+                          ? "bg-primary/10 border-primary text-primary"
+                          : "border-border text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      🌾 Offer a Crop
+                    </button>
+                    <button type="button"
+                      onClick={() => setBuyForm(p => ({ ...p, offer_type: "tool", offer_crop_name: "" }))}
+                      className={`flex-1 py-1.5 px-3 rounded-lg border text-xs font-medium transition-colors ${
+                        buyForm.offer_type === "tool"
+                          ? "bg-primary/10 border-primary text-primary"
+                          : "border-border text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      🚜 Offer a Tool
+                    </button>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">
-                      Crop to Offer <span className="text-destructive">*</span>
+                      {buyForm.offer_type === "tool" ? "Tool to Offer" : "Crop to Offer"} <span className="text-destructive">*</span>
                     </label>
                     <select
                       name="offer_crop_name"
@@ -1371,47 +1577,71 @@ export default function MarketplacePage() {
                       required
                       className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                     >
-                      <option value="">Select crop</option>
-                      {CROP_TYPES.map((c) => (
+                      <option value="">Select {buyForm.offer_type === "tool" ? "tool" : "crop"}</option>
+                      {(buyForm.offer_type === "tool" ? TOOL_TYPES : CROP_TYPES).map((c) => (
                         <option key={c} value={c}>
                           {c}
                         </option>
                       ))}
                     </select>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">
-                        Quantity <span className="text-destructive">*</span>
-                      </label>
-                      <Input
-                        name="offer_quantity"
-                        type="number"
-                        min="1"
-                        step="0.01"
-                        value={buyForm.offer_quantity}
-                        onChange={handleBuyChange}
-                        placeholder="e.g. 100"
-                        required
-                      />
+                  {/* Crop offer: quantity + unit */}
+                  {buyForm.offer_type === "crop" && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1.5">
+                          Quantity <span className="text-destructive">*</span>
+                        </label>
+                        <Input
+                          name="offer_quantity"
+                          type="number"
+                          min="1"
+                          step="0.01"
+                          value={buyForm.offer_quantity}
+                          onChange={handleBuyChange}
+                          placeholder="e.g. 100"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1.5">
+                          Unit
+                        </label>
+                        <select
+                          name="offer_unit"
+                          value={buyForm.offer_unit}
+                          onChange={handleBuyChange}
+                          className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        >
+                          <option value="kg">kg</option>
+                          <option value="quintal">Quintal</option>
+                          <option value="ton">Ton</option>
+                          <option value="piece">Piece</option>
+                        </select>
+                      </div>
                     </div>
+                  )}
+
+                  {/* Tool offer: condition */}
+                  {buyForm.offer_type === "tool" && (
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-1.5">
-                        Unit
+                        Condition <span className="text-destructive">*</span>
                       </label>
                       <select
-                        name="offer_unit"
-                        value={buyForm.offer_unit}
+                        name="offer_tool_condition"
+                        value={buyForm.offer_tool_condition}
                         onChange={handleBuyChange}
+                        required
                         className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                       >
-                        <option value="kg">kg</option>
-                        <option value="quintal">Quintal</option>
-                        <option value="ton">Ton</option>
-                        <option value="piece">Piece</option>
+                        <option value="">Select condition</option>
+                        {TOOL_CONDITIONS.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
                       </select>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="flex gap-3 pt-1">
@@ -1434,7 +1664,7 @@ export default function MarketplacePage() {
                         Sending...
                       </span>
                     ) : (
-                      "Send Buy Request"
+                      "Send Exchange Request"
                     )}
                   </Button>
                 </div>

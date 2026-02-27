@@ -3,6 +3,7 @@ import { StatCard } from '@/components/stat-card';
 import { TrustScoreStat } from '@/components/trust-score-stat';
 import { PriceChart } from '@/components/price-chart';
 import { MarketAlerts } from '@/components/market-alerts';
+import { MandiPriceTicker } from '@/components/mandi-price-ticker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function DashboardPage() {
@@ -13,6 +14,11 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-4xl font-bold text-foreground text-balance">Welcome to FarmLink</h1>
           <p className="text-muted-foreground mt-2">Your trusted agricultural exchange platform</p>
+        </div>
+
+        {/* Live Mandi Price Ticker */}
+        <div>
+          <MandiPriceTicker />
         </div>
 
         {/* Statistics row – two cards flexed evenly */}
@@ -41,8 +47,8 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <QuickActionCard
             icon="📤"
-            title="List Crop"
-            description="Add new crop to sell"
+            title="List Item"
+            description="Add a crop or tool listing"
             href="/marketplace?action=list"
           />
           <QuickActionCard

@@ -13,6 +13,7 @@ interface ExchangeRequest {
   listing_id: string;
   buyer_id: string;
   quantity_requested: number;
+  offer_type: 'crop' | 'tool';
   offer_crop_name: string | null;
   offer_quantity: number | null;
   offer_unit: string | null;
@@ -25,6 +26,7 @@ interface ExchangeRequest {
     location: string;
     quality_grade: string;
     farmer_id: string;
+    listing_type: 'crop' | 'tool';
   };
   // joined from profiles via buyer_id → profiles.id
   profiles?: {
@@ -52,8 +54,19 @@ function statusLabel(status: string) {
   return status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function cropEmoji(name = ''): string {
+function itemEmoji(name = '', listingType: 'crop' | 'tool' = 'crop'): string {
   const n = name.toLowerCase();
+  if (listingType === 'tool') {
+    if (n.includes('tractor')) return '🚜';
+    if (n.includes('harvest')) return '🌾';
+    if (n.includes('plough') || n.includes('plow')) return '⚙️';
+    if (n.includes('drill')) return '🔧';
+    if (n.includes('spray')) return '💨';
+    if (n.includes('thresh')) return '🔄';
+    if (n.includes('trailer')) return '🚛';
+    if (n.includes('pump') || n.includes('water')) return '💧';
+    return '🔧';
+  }
   if (n.includes('wheat'))                       return '🌾';
   if (n.includes('rice'))                        return '🍚';
   if (n.includes('corn') || n.includes('maize')) return '🌽';
@@ -127,7 +140,8 @@ export default function ExchangePage() {
           price_per_kg,
           location,
           quality_grade,
-          farmer_id
+          farmer_id,
+          listing_type
         ),
         profiles (
           full_name,
@@ -175,7 +189,7 @@ export default function ExchangePage() {
       if (notifyMessages[newStatus]) {
         const exchange = exchanges.find((ex) => ex.id === id);
         if (exchange) {
-          const cropName = exchange.produce_listings?.crop_name ?? 'your crop';
+          const cropName = exchange.produce_listings?.crop_name ?? 'your item';
           const message = notifyMessages[newStatus].replace('{crop}', cropName);
           await supabase.from('notifications').insert({
             user_id: exchange.buyer_id,
@@ -315,9 +329,9 @@ export default function ExchangePage() {
                   <CardContent className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 items-center">
 
-                      {/* Crop Info */}
+                      {/* Item Info */}
                       <div className="flex items-center gap-3">
-                        <span className="text-3xl">{cropEmoji(crop?.crop_name)}</span>
+                        <span className="text-3xl">{itemEmoji(crop?.crop_name, crop?.listing_type)}</span>
                         <div>
                           <p className="font-bold text-foreground">{crop?.crop_name ?? '—'}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">
@@ -345,12 +359,16 @@ export default function ExchangePage() {
                         <p className="text-xs font-semibold text-muted-foreground uppercase">Offering In Exchange</p>
                         {ex.offer_crop_name ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-xl">{cropEmoji(ex.offer_crop_name)}</span>
+                            <span className="text-xl">{itemEmoji(ex.offer_crop_name, ex.offer_type ?? 'crop')}</span>
                             <div>
                               <p className="font-semibold text-foreground">{ex.offer_crop_name}</p>
-                              <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
-                                {ex.offer_quantity} {ex.offer_unit}
-                              </p>
+                              {ex.offer_type === 'tool' ? (
+                                <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">🚜 Tool</p>
+                              ) : (
+                                <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
+                                  {ex.offer_quantity} {ex.offer_unit}
+                                </p>
+                              )}
                             </div>
                           </div>
                         ) : (
