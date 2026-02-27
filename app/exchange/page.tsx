@@ -1,75 +1,132 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { createClient } from '@/utils/supabase/client';
 
-const exchanges = [
-  {
-    id: 1,
-    requester: 'Sharma Trading',
-    offeringCrop: 'Wheat (500 kg)',
-    seekingCrop: 'Rice (400 kg)',
-    date: 'Feb 20, 2024',
-    status: 'pending',
-    trustScore: 4.7,
-    region: 'Haryana',
-  },
-  {
-    id: 2,
-    requester: 'Green Valley Coop',
-    offeringCrop: 'Corn (750 kg)',
-    seekingCrop: 'Wheat (600 kg)',
-    date: 'Feb 18, 2024',
-    status: 'accepted',
-    trustScore: 4.9,
-    region: 'Madhya Pradesh',
-  },
-  {
-    id: 3,
-    requester: 'Delhi Fresh Produce',
-    offeringCrop: 'Vegetables (200 kg)',
-    seekingCrop: 'Grains mix (300 kg)',
-    date: 'Feb 15, 2024',
-    status: 'completed',
-    trustScore: 4.6,
-    region: 'Delhi',
-  },
-  {
-    id: 4,
-    requester: 'Punjab Grains',
-    offeringCrop: 'Rice (1000 kg)',
-    seekingCrop: 'Wheat (800 kg)',
-    date: 'Feb 22, 2024',
-    status: 'pending',
-    trustScore: 4.8,
-    region: 'Punjab',
-  },
-  {
-    id: 5,
-    requester: 'Harvest Plus',
-    offeringCrop: 'Cotton (500 kg)',
-    seekingCrop: 'Seeds package',
-    date: 'Feb 21, 2024',
-    status: 'pending',
-    trustScore: 4.5,
-    region: 'Gujarat',
-  },
-];
+// ── Types ─────────────────────────────────────────────────────────────────────
+interface ExchangeRequest {
+  id: string;
+  listing_id: string;
+  buyer_id: string;
+  quantity_requested: number;
+  status: 'pending' | 'accepted' | 'rejected' | 'in_transit' | 'completed';
+  created_at: string;
+  // joined from produce_listings
+  produce_listings?: {
+    crop_name: string;
+    unit: string;
+    price_per_kg: number;
+    location: string;
+    quality_grade: string;
+    farmer_id: string;
+  };
+}
 
+type StatusFilter = 'all' | 'pending' | 'accepted' | 'in_transit' | 'completed' | 'rejected';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function statusColor(status: string) {
+  switch (status) {
+    case 'pending':    return 'bg-yellow-100/60 text-yellow-700 border-yellow-300';
+    case 'accepted':   return 'bg-blue-100/60 text-blue-700 border-blue-300';
+    case 'in_transit': return 'bg-purple-100/60 text-purple-700 border-purple-300';
+    case 'completed':  return 'bg-green-100/60 text-green-700 border-green-300';
+    case 'rejected':   return 'bg-red-100/60 text-red-700 border-red-300';
+    default:           return 'bg-gray-100/60 text-gray-700 border-gray-300';
+  }
+}
+
+function statusLabel(status: string) {
+  return status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function cropEmoji(name = ''): string {
+  const n = name.toLowerCase();
+  if (n.includes('wheat'))                       return '🌾';
+  if (n.includes('rice'))                        return '🍚';
+  if (n.includes('corn') || n.includes('maize')) return '🌽';
+  if (n.includes('cotton'))                      return '☁️';
+  if (n.includes('sugar'))                       return '🍃';
+  if (n.includes('veg'))                         return '🥕';
+  if (n.includes('fruit'))                       return '🍎';
+  if (n.includes('pulse') || n.includes('dal'))  return '🫘';
+  if (n.includes('spice'))                       return '🌶️';
+  return '🌱';
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function ExchangePage() {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100/50 text-yellow-700 border-yellow-300';
-      case 'accepted':
-        return 'bg-blue-100/50 text-blue-700 border-blue-300';
-      case 'completed':
-        return 'bg-green-100/50 text-green-700 border-green-300';
-      default:
-        return 'bg-gray-100/50 text-gray-700 border-gray-300';
+  const supabase = createClient();
+
+  const [exchanges, setExchanges]     = useState<ExchangeRequest[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [fetchError, setFetchError]   = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<StatusFilter>('all');
+  const [actionLoading, setActionLoading] = useState<string | null>(null); // id of row being updated
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // ── Get current user ────────────────────────────────────────────────────────
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
+  }, []);
+
+  // ── Fetch exchanges ─────────────────────────────────────────────────────────
+  const fetchExchanges = useCallback(async () => {
+    setLoadingData(true);
+    setFetchError(null);
+
+    let query = supabase
+      .from('exchange_requests')
+      .select(`
+        *,
+        produce_listings (
+          crop_name,
+          unit,
+          price_per_kg,
+          location,
+          quality_grade,
+          farmer_id
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (activeFilter !== 'all') query = query.eq('status', activeFilter);
+
+    const { data, error } = await query;
+    if (error) setFetchError(error.message);
+    else setExchanges((data ?? []) as ExchangeRequest[]);
+    setLoadingData(false);
+  }, [activeFilter]);
+
+  useEffect(() => { fetchExchanges(); }, [fetchExchanges]);
+
+  // ── Update exchange status ──────────────────────────────────────────────────
+  const updateStatus = async (id: string, newStatus: string) => {
+    setActionLoading(id);
+    const { error } = await supabase
+      .from('exchange_requests')
+      .update({ status: newStatus })
+      .eq('id', id);
+
+    if (!error) {
+      setExchanges((prev) =>
+        prev.map((ex) => ex.id === id ? { ...ex, status: newStatus as ExchangeRequest['status'] } : ex)
+      );
     }
+    setActionLoading(null);
   };
 
+  const filters: StatusFilter[] = ['all', 'pending', 'accepted', 'in_transit', 'completed', 'rejected'];
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <AppLayout>
       <div className="p-8 space-y-8">
@@ -77,79 +134,165 @@ export default function ExchangePage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Exchange Requests</h1>
-            <p className="text-muted-foreground mt-2">Manage crop exchange proposals with other farmers</p>
+            <p className="text-muted-foreground mt-2">Track all buy requests for your listed crops</p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">+ Create Exchange Request</Button>
+          <Button variant="outline" onClick={fetchExchanges} disabled={loadingData}>
+            {loadingData ? 'Refreshing…' : '↺ Refresh'}
+          </Button>
         </div>
 
         {/* Filter Tabs */}
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" className="bg-primary/10">All Requests</Button>
-          <Button variant="outline">Pending</Button>
-          <Button variant="outline">Accepted</Button>
-          <Button variant="outline">Completed</Button>
-        </div>
-
-        {/* Exchange Requests Table/Cards */}
-        <div className="space-y-4">
-          {exchanges.map((exchange) => (
-            <Card key={exchange.id} className="border-border">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
-                  {/* Requester Info */}
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">From</p>
-                    <p className="font-bold text-foreground">{exchange.requester}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <span className="text-yellow-500">⭐</span>
-                      <span className="text-sm text-muted-foreground">{exchange.trustScore}</span>
-                    </div>
-                  </div>
-
-                  {/* Offering */}
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Offering</p>
-                    <p className="font-medium text-primary">{exchange.offeringCrop}</p>
-                    <p className="text-xs text-muted-foreground mt-1">📍 {exchange.region}</p>
-                  </div>
-
-                  {/* Exchange Arrow */}
-                  <div className="flex justify-center">
-                    <span className="text-2xl">⇄</span>
-                  </div>
-
-                  {/* Seeking */}
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">Seeking</p>
-                    <p className="font-medium text-secondary">{exchange.seekingCrop}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{exchange.date}</p>
-                  </div>
-
-                  {/* Status and Actions */}
-                  <div className="flex flex-col gap-2">
-                    <Badge className={getStatusColor(exchange.status)}>
-                      {exchange.status.charAt(0).toUpperCase() + exchange.status.slice(1)}
-                    </Badge>
-                    <div className="flex gap-2">
-                      {exchange.status === 'pending' && (
-                        <>
-                          <Button size="sm" variant="outline" className="flex-1">Accept</Button>
-                          <Button size="sm" variant="outline" className="flex-1">Reject</Button>
-                        </>
-                      )}
-                      {exchange.status === 'accepted' && (
-                        <Button size="sm" className="flex-1 bg-primary/90">Confirm Ready</Button>
-                      )}
-                      {exchange.status === 'completed' && (
-                        <Button size="sm" variant="outline" className="flex-1">View Details</Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {filters.map((f) => (
+            <Button
+              key={f}
+              variant="outline"
+              onClick={() => setActiveFilter(f)}
+              className={activeFilter === f ? 'bg-primary/10 border-primary text-primary' : ''}
+            >
+              {f === 'all' ? 'All Requests' : statusLabel(f)}
+            </Button>
           ))}
         </div>
+
+        {/* Loading */}
+        {loadingData && (
+          <div className="flex items-center justify-center py-24 text-muted-foreground gap-3">
+            <svg className="animate-spin h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+            </svg>
+            Loading exchanges...
+          </div>
+        )}
+
+        {/* Error */}
+        {fetchError && !loadingData && (
+          <div className="text-center py-16 text-destructive">
+            <p className="text-lg font-semibold">Failed to load exchanges</p>
+            <p className="text-sm mt-1">{fetchError}</p>
+            <Button variant="outline" className="mt-4" onClick={fetchExchanges}>Retry</Button>
+          </div>
+        )}
+
+        {/* Empty */}
+        {!loadingData && !fetchError && exchanges.length === 0 && (
+          <div className="text-center py-24 text-muted-foreground">
+            <div className="text-6xl mb-4">📭</div>
+            <p className="text-lg font-semibold text-foreground">No exchange requests yet</p>
+            <p className="text-sm mt-1">
+              {activeFilter !== 'all'
+                ? `No ${statusLabel(activeFilter).toLowerCase()} requests found.`
+                : 'Buyers will appear here after they click "Buy Now" on your listings.'}
+            </p>
+          </div>
+        )}
+
+        {/* Exchange Cards */}
+        {!loadingData && exchanges.length > 0 && (
+          <div className="space-y-4">
+            {exchanges.map((ex) => {
+              const crop = ex.produce_listings;
+              const isLoading = actionLoading === ex.id;
+              const isFarmer = currentUserId === crop?.farmer_id;
+              const isBuyer  = currentUserId === ex.buyer_id;
+
+              return (
+                <Card key={ex.id} className="border-border hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-center">
+
+                      {/* Crop Info */}
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl">{cropEmoji(crop?.crop_name)}</span>
+                        <div>
+                          <p className="font-bold text-foreground">{crop?.crop_name ?? '—'}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            📍 {crop?.location ?? '—'} · {crop?.quality_grade ?? '—'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Order Details */}
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">Order Details</p>
+                        <p className="font-semibold text-foreground">
+                          {ex.quantity_requested} {crop?.unit ?? 'units'}
+                        </p>
+                        {crop && (
+                          <p className="text-sm text-primary font-medium">
+                            ₹{(ex.quantity_requested * crop.price_per_kg).toLocaleString('en-IN')} est.
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">{formatDate(ex.created_at)}</p>
+                      </div>
+
+                      {/* Role Badges */}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2 flex-wrap">
+                          {isFarmer && (
+                            <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/30 font-medium">
+                              You're the Farmer
+                            </span>
+                          )}
+                          {isBuyer && (
+                            <span className="text-xs px-2 py-1 rounded-full bg-blue-100/60 text-blue-700 border border-blue-300 font-medium">
+                              You're the Buyer
+                            </span>
+                          )}
+                        </div>
+                        <Badge variant="outline" className={statusColor(ex.status)}>
+                          {statusLabel(ex.status)}
+                        </Badge>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-col gap-2">
+                        {/* Farmer actions on pending */}
+                        {isFarmer && ex.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button size="sm" className="flex-1 bg-primary hover:bg-primary/90"
+                              disabled={isLoading} onClick={() => updateStatus(ex.id, 'accepted')}>
+                              {isLoading ? '…' : 'Accept'}
+                            </Button>
+                            <Button size="sm" variant="outline" className="flex-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                              disabled={isLoading} onClick={() => updateStatus(ex.id, 'rejected')}>
+                              {isLoading ? '…' : 'Reject'}
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* Farmer marks in-transit */}
+                        {isFarmer && ex.status === 'accepted' && (
+                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white"
+                            disabled={isLoading} onClick={() => updateStatus(ex.id, 'in_transit')}>
+                            {isLoading ? '…' : '🚚 Mark In Transit'}
+                          </Button>
+                        )}
+
+                        {/* Buyer marks completed */}
+                        {isBuyer && ex.status === 'in_transit' && (
+                          <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"
+                            disabled={isLoading} onClick={() => updateStatus(ex.id, 'completed')}>
+                            {isLoading ? '…' : '✅ Mark Received'}
+                          </Button>
+                        )}
+
+                        {ex.status === 'completed' && (
+                          <span className="text-sm text-green-600 font-medium">✔ Exchange completed</span>
+                        )}
+
+                        {ex.status === 'rejected' && (
+                          <span className="text-sm text-destructive font-medium">✕ Request rejected</span>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
     </AppLayout>
   );
