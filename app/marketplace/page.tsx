@@ -233,6 +233,7 @@ export default function MarketplacePage() {
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchInputValue, setSearchInputValue] = useState("");
   const [filterRegion, setFilterRegion] = useState("");
   const [filterQuality, setFilterQuality] = useState("");
   const [filterType, setFilterType] = useState<ListingTypeFilter>("all");
@@ -755,8 +756,14 @@ export default function MarketplacePage() {
             type="search"
             placeholder="Search crops..."
             className="w-64"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInputValue}
+            onChange={(e) => setSearchInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                setSearchQuery(searchInputValue);
+              }
+            }}
           />
           <select
             className="px-4 py-2 rounded-lg border border-border bg-background text-foreground"
