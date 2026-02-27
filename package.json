@@ -40,6 +40,7 @@
     "@supabase/ssr": "^0.8.0",
     "@vercel/analytics": "1.6.1",
     "autoprefixer": "^10.4.20",
+    "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.1.1",
@@ -57,11 +58,13 @@
     "recharts": "2.15.0",
     "sonner": "^1.7.1",
     "tailwind-merge": "^3.3.1",
+    "twilio": "^5.12.2",
     "vaul": "^1.1.2",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.0",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^22",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
