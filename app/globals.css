@@ -39,6 +39,8 @@
   --sidebar-ring: oklch(0.4 0.12 142.5);
 }
 
+
+
 .dark {
   --background: oklch(0.2 0.04 142.5);
   --foreground: oklch(0.92 0.01 142.5);
@@ -119,7 +121,13 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  .leaflet-container {
+    width: 100%;
+    height: 100%;
   }
 }
