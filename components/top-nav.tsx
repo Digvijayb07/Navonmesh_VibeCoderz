@@ -8,7 +8,11 @@ import type { User } from "@supabase/supabase-js";
 import HindiToggle from "@/components/hindi-toggle";
 import { useRouter } from "next/navigation";
 
-export function TopNav() {
+interface TopNavProps {
+  onMenuClick: () => void;
+}
+
+export function TopNav({ onMenuClick }: TopNavProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -50,9 +54,31 @@ export function TopNav() {
 
   return (
     <header className="glass-nav sticky top-0 z-40 shadow-sm shadow-green-900/5">
-      <div className="h-[68px] px-8 flex items-center justify-between gap-5">
+      <div className="h-[68px] px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 sm:gap-5 w-full">
+        {/* Hamburger Menu Button */}
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden p-2 rounded-lg hover:bg-green-50 transition-colors flex-shrink-0"
+          aria-label="Toggle menu"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
         {/* Search Bar */}
-        <div className="flex-1 max-w-lg relative">
+        <div className="flex-1 max-w-lg relative hidden sm:block">
           <svg
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-green-500/50 z-10"
             width="20"
@@ -77,15 +103,15 @@ export function TopNav() {
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {/* Notifications */}
           <NotificationBell userId={user?.id ?? null} />
-          <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-3">
             <HindiToggle />
           </div>
           {/* Messages */}
           <button
-            className="p-2.5 rounded-xl hover:bg-green-50 transition-all duration-200 hover:shadow-sm"
+            className="p-2.5 rounded-xl hover:bg-green-50 transition-all duration-200 hover:shadow-sm hidden sm:block"
             title="Messages"
           >
             <span className="text-xl">💬</span>
@@ -112,7 +138,7 @@ export function TopNav() {
                   </span>
                 )}
               </div>
-              <span className="text-sm font-medium text-foreground max-w-[140px] truncate">
+              <span className="text-sm font-medium text-foreground max-w-[100px] sm:max-w-[140px] truncate hidden sm:inline">
                 {displayName}
               </span>
               <svg
@@ -130,7 +156,7 @@ export function TopNav() {
 
             {/* Dropdown */}
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-56 glass-card rounded-2xl shadow-xl shadow-green-900/10 border border-green-100/40 overflow-hidden z-50 animate-scale-in">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-56 max-w-sm glass-card rounded-2xl shadow-xl shadow-green-900/10 border border-green-100/40 overflow-hidden z-50 animate-scale-in">
                 {user?.email && (
                   <div className="px-4 py-3 border-b border-green-100/30">
                     <p className="text-sm font-medium text-green-900 truncate">

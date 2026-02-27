@@ -22,6 +22,11 @@ export const metadata: Metadata = {
   description:
     "Connect farmers, buyers, transporters and rural stakeholders in a trustworthy agricultural marketplace",
   generator: "v0.app",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+  },
   icons: {
     icon: [
       {
@@ -52,11 +57,11 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${poppins.variable}`}
     >
-      <body className="font-sans antialiased" suppressHydrationWarning>
+      <body className="font-sans antialiased overflow-x-hidden" suppressHydrationWarning>
         {/* Decorative background orbs */}
         <div
           className="orb-green"
-          style={{ width: "500px", height: "500px", top: "-10%", right: "-5%" }}
+          style={{ width: "500px", height: "500px", top: "-10%", right: "0" }}
         />
         <div
           className="orb-green"
@@ -64,12 +69,12 @@ export default function RootLayout({
             width: "400px",
             height: "400px",
             bottom: "10%",
-            left: "-5%",
+            left: "0",
           }}
         />
         <div
           className="orb-amber"
-          style={{ width: "350px", height: "350px", top: "40%", right: "20%" }}
+          style={{ width: "350px", height: "350px", top: "40%", right: "15%" }}
         />
         <GoogleTranslateLoader />
         {children}

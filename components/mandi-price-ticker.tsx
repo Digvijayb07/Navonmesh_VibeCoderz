@@ -56,7 +56,7 @@ export function MandiPriceTicker() {
   return (
     <div className="w-full glass-card rounded-2xl flex items-center overflow-hidden border-0">
       {/* LEFT SECTION */}
-      <div className="flex items-center gap-2 px-4 shrink-0 bg-gradient-to-r from-green-600 to-green-500 h-11">
+      <div className="hidden sm:flex items-center gap-2 px-4 shrink-0 bg-gradient-to-r from-green-600 to-green-500 h-11">
         <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
         <span className="text-xs font-bold text-white uppercase tracking-wide">
           Live Prices
@@ -100,7 +100,7 @@ export function MandiPriceTicker() {
       </div>
 
       {/* RIGHT DATE */}
-      <div className="px-4 shrink-0 text-xs text-green-700/50 h-11 flex items-center bg-green-50/30 backdrop-blur-sm">
+      <div className="hidden sm:flex px-4 shrink-0 text-xs text-green-700/50 h-11 items-center bg-green-50/30 backdrop-blur-sm">
         📅 {date}
       </div>
 
@@ -115,7 +115,7 @@ export function MandiPriceTicker() {
         }
 
         .animate-ticker {
-          animation: ticker 10s linear infinite;
+          animation: ticker 6s linear infinite;
         }
 
         div:hover > .animate-ticker {

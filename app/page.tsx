@@ -15,24 +15,24 @@ import {
 export default function DashboardPage() {
   return (
     <AppLayout>
-      <div className="p-8 lg:p-10 space-y-8 relative">
+      <div className="p-4 sm:p-6 lg:p-10 space-y-6 sm:space-y-8 relative w-full max-w-full overflow-x-hidden">
         {/* Decorative blur orbs */}
         <div className="absolute -top-20 -right-20 w-80 h-80 bg-green-300/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 -left-20 w-60 h-60 bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Header */}
         <div className="animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100/60 backdrop-blur-sm border border-green-200/40 text-green-700 text-sm font-medium mb-4 shadow-sm">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-green-100/60 backdrop-blur-sm border border-green-200/40 text-green-700 text-xs sm:text-sm font-medium mb-3 sm:mb-4 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             Dashboard Overview
           </div>
           <h1
-            className="text-4xl lg:text-5xl font-bold text-green-900 text-balance"
+            className="text-2xl sm:text-3xl lg:text-5xl font-bold text-green-900 text-balance"
             style={{ fontFamily: "var(--font-poppins)" }}
           >
             Welcome to <span className="gradient-text">Krishi Exchange</span>
           </h1>
-          <p className="text-green-700/60 mt-3 text-base">
+          <p className="text-green-700/60 mt-2 sm:mt-3 text-sm sm:text-base">
             Your trusted agricultural marketplace platform
           </p>
         </div>
@@ -43,8 +43,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Statistics row – two cards flexed evenly */}
-        <div className="flex flex-wrap gap-4 justify-center animate-fade-in-up animate-stagger-2">
-          <div className="flex-1 min-w-[260px]">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center animate-fade-in-up animate-stagger-2">
+          <div className="flex-1 min-w-full sm:min-w-[260px]">
             <StatCard
               icon="🤝"
               title="Pending Exchanges"
@@ -53,13 +53,13 @@ export default function DashboardPage() {
               trend={5}
             />
           </div>
-          <div className="flex-1 min-w-[260px]">
+          <div className="flex-1 min-w-full sm:min-w-[260px]">
             <TrustScoreStat />
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up animate-stagger-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up animate-stagger-3">
           <QuickActionCard
             icon="📤"
             title="List Item"

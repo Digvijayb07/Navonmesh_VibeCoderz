@@ -259,11 +259,11 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className="p-8 space-y-8 max-w-4xl">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-4xl w-full overflow-x-hidden">
         {/* Page Header */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground">My Profile</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">My Profile</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-2">
             Manage your personal information and verification status
           </p>
         </div>
@@ -271,54 +271,54 @@ export default function ProfilePage() {
         {/* Profile Hero Card */}
         <Card className="border-border overflow-hidden">
           {/* Gradient Banner */}
-          <div className="h-32 bg-gradient-to-r from-primary via-primary/80 to-accent relative">
+          <div className="h-24 sm:h-32 bg-gradient-to-r from-primary via-primary/80 to-accent relative">
             <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.08%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-50"></div>
           </div>
 
-          <CardContent className="relative px-8 pb-8">
+          <CardContent className="relative px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8">
             {/* Avatar */}
-            <div className="flex items-end gap-6 -mt-16 mb-6">
-              <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground text-5xl font-bold shadow-xl border-4 border-background">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4 sm:gap-6 -mt-12 sm:-mt-16 mb-6">
+              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground text-4xl sm:text-5xl font-bold shadow-xl border-4 border-background">
                 {avatarLetter}
               </div>
-              <div className="pb-2 flex-1">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h2 className="text-2xl font-bold text-foreground">{fullName || 'Your Name'}</h2>
-                  <Badge className={`${tier.bg} ${tier.color} border`}>{tier.label} Member</Badge>
+              <div className="pb-2 flex-1 text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-start">
+                  <h2 className="text-xl sm:text-2xl font-bold text-foreground">{fullName || 'Your Name'}</h2>
+                  <Badge className={`${tier.bg} ${tier.color} border text-xs`}>{tier.label} Member</Badge>
                   {phoneVerified && (
-                    <Badge className="bg-green-500/10 text-green-600 border border-green-500/30">
+                    <Badge className="bg-green-500/10 text-green-600 border border-green-500/30 text-xs">
                       ✓ Verified
                     </Badge>
                   )}
                   {!phoneVerified && (
-                    <Badge className="bg-orange-500/10 text-orange-600 border border-orange-500/30">
+                    <Badge className="bg-orange-500/10 text-orange-600 border border-orange-500/30 text-xs">
                       ⚠ Unverified
                     </Badge>
                   )}
                 </div>
-                <p className="text-muted-foreground mt-1">
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">
                   {role} · Member since {registeredSince}
                 </p>
               </div>
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-center">
-                <p className="text-3xl font-bold text-primary">{scoreOut5}</p>
-                <p className="text-xs text-muted-foreground mt-1">Trust Score</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 sm:p-4 text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-primary">{scoreOut5}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Trust Score</p>
               </div>
-              <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 text-center">
-                <p className="text-3xl font-bold text-foreground">{total}</p>
-                <p className="text-xs text-muted-foreground mt-1">Transactions</p>
+              <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 sm:p-4 text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">{total}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Transactions</p>
               </div>
-              <div className="bg-green-500/5 border border-green-500/10 rounded-xl p-4 text-center">
-                <p className="text-3xl font-bold text-green-600">{completed}</p>
-                <p className="text-xs text-muted-foreground mt-1">Completed</p>
+              <div className="bg-green-500/5 border border-green-500/10 rounded-xl p-3 sm:p-4 text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-green-600">{completed}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Completed</p>
               </div>
-              <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-4 text-center">
-                <p className="text-3xl font-bold text-red-500">{failed}</p>
-                <p className="text-xs text-muted-foreground mt-1">Failed</p>
+              <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3 sm:p-4 text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-red-500">{failed}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Failed</p>
               </div>
             </div>
           </CardContent>
@@ -327,9 +327,9 @@ export default function ProfilePage() {
         {/* Verification Status Card */}
         <Card className={`border-2 transition-all ${phoneVerified ? 'border-green-500/30 bg-green-500/[0.02]' : 'border-orange-500/30 bg-orange-500/[0.02]'}`}>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   {phoneVerified ? (
                     <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-500/10 text-green-600 text-lg">✓</span>
                   ) : (
@@ -337,7 +337,7 @@ export default function ProfilePage() {
                   )}
                   Identity Verification
                 </CardTitle>
-                <CardDescription className="mt-1">
+                <CardDescription className="mt-1 text-xs sm:text-sm">
                   {phoneVerified
                     ? 'Your phone number has been verified. Your profile is trusted.'
                     : 'Verify your phone number via OTP to increase trust and unlock all features.'}
@@ -346,7 +346,7 @@ export default function ProfilePage() {
               {!phoneVerified && (
                 <Button
                   onClick={openOtpDialog}
-                  className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                  className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 w-full sm:w-auto"
                   id="verify-phone-btn"
                 >
                   Verify Now
@@ -355,34 +355,34 @@ export default function ProfilePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-background rounded-lg border border-border">
-                <span className="text-2xl">📧</span>
-                <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-3 p-3 bg-background rounded-lg border border-border">
+                <span className="text-xl sm:text-2xl">📧</span>
+                <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Email</p>
-                  <p className="text-sm font-medium text-foreground truncate">{userEmail}</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground truncate">{userEmail}</p>
                 </div>
-                <Badge className="ml-auto bg-green-500/10 text-green-600 border border-green-500/30 text-[10px]">Verified</Badge>
+                <Badge className="bg-green-500/10 text-green-600 border border-green-500/30 text-[10px]">Verified</Badge>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-background rounded-lg border border-border">
-                <span className="text-2xl">📱</span>
-                <div>
+              <div className="flex items-center gap-2 sm:gap-3 p-3 bg-background rounded-lg border border-border">
+                <span className="text-xl sm:text-2xl">📱</span>
+                <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Phone</p>
-                  <p className="text-sm font-medium text-foreground">{profile?.phone || 'Not set'}</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground">{profile?.phone || 'Not set'}</p>
                 </div>
                 {phoneVerified ? (
-                  <Badge className="ml-auto bg-green-500/10 text-green-600 border border-green-500/30 text-[10px]">Verified</Badge>
+                  <Badge className="bg-green-500/10 text-green-600 border border-green-500/30 text-[10px]">Verified</Badge>
                 ) : (
-                  <Badge className="ml-auto bg-orange-500/10 text-orange-600 border border-orange-500/30 text-[10px]">Pending</Badge>
+                  <Badge className="bg-orange-500/10 text-orange-600 border border-orange-500/30 text-[10px]">Pending</Badge>
                 )}
               </div>
-              <div className="flex items-center gap-3 p-3 bg-background rounded-lg border border-border">
-                <span className="text-2xl">🆔</span>
-                <div>
+              <div className="flex items-center gap-2 sm:gap-3 p-3 bg-background rounded-lg border border-border">
+                <span className="text-xl sm:text-2xl">🆔</span>
+                <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">KYC</p>
-                  <p className="text-sm font-medium text-foreground">Coming Soon</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground">Coming Soon</p>
                 </div>
-                <Badge className="ml-auto bg-muted text-muted-foreground border border-border text-[10px]">N/A</Badge>
+                <Badge className="bg-muted text-muted-foreground border border-border text-[10px]">N/A</Badge>
               </div>
             </div>
 

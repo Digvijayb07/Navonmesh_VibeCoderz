@@ -15,7 +15,12 @@ const menuItems = [
   { icon: "⚖️", label: "Disputes", href: "/disputes" },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const [trustScore, setTrustScore] = useState<number | null>(null);
   const [role, setRole] = useState<string>("Farmer");
@@ -40,13 +45,31 @@ export function Sidebar() {
   const scoreDisplay = trustScore !== null ? (trustScore / 20).toFixed(1) : "—";
 
   return (
-    <aside className="w-64 glass-sidebar flex flex-col h-screen relative overflow-hidden">
+    <aside
+      className={cn(
+        "w-64 glass-sidebar flex flex-col h-screen relative overflow-hidden transition-transform duration-300 ease-in-out z-50",
+        "lg:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        "fixed lg:relative"
+      )}
+    >
       {/* Subtle pattern overlay */}
       <div className="absolute inset-0 pattern-dots opacity-30 pointer-events-none" />
 
       {/* Logo */}
       <div className="px-6 py-7 border-b border-green-200/20 relative z-10">
         <div className="flex items-center gap-3.5">
+          {/* Close button for mobile */}
+          <button
+            onClick={onClose}
+            className="lg:hidden absolute top-6 right-4 p-2 rounded-lg hover:bg-green-100/50 transition-colors"
+            aria-label="Close menu"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
           <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-lg shadow-green-500/20">
             <svg
               width="24"
@@ -85,6 +108,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onClose}
               className={cn(
                 "flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group",
                 isActive

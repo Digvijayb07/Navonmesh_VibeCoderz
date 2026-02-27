@@ -246,7 +246,7 @@ export default function ExchangePage() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <AppLayout>
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 w-full max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

@@ -270,6 +270,8 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
 }
 
 @layer base {
@@ -281,11 +283,33 @@ html {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
     overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
+  }
+
+  /* Prevent horizontal scroll on all elements */
+  #__next,
+  main,
+  section,
+  div {
+    max-width: 100%;
   }
 
   .leaflet-container {
     width: 100%;
     height: 100%;
+  }
+
+  /* Mobile-friendly touch targets */
+  @media (max-width: 768px) {
+    button,
+    a,
+    input,
+    select,
+    textarea {
+      min-height: 44px;
+    }
   }
 }
 
@@ -576,4 +600,70 @@ html {
   filter: blur(80px);
   pointer-events: none;
   z-index: 0;
+}
+
+/* ═══════════════════════════════════════════
+   MOBILE-FRIENDLY UTILITIES
+   ═══════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .glass-sidebar {
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Prevent horizontal overflow on all containers */
+.overflow-x-hidden,
+[class*="overflow-x-hidden"] {
+  overflow-x: hidden !important;
+  max-width: 100vw;
+}
+
+/* Touch-friendly interactive elements */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Increase tap targets for mobile */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Better mobile scrolling */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure cards and containers don't overflow */
+.card,
+[class*="card"],
+.glass-card {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }

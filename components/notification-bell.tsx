@@ -109,45 +109,97 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 glass-card rounded-2xl shadow-xl shadow-green-900/10 border border-green-100/30 z-50 overflow-hidden animate-scale-in">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-green-100/30 bg-green-50/30">
-            <span className="font-semibold text-sm text-green-900">
-              Notifications
-            </span>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllRead}
-                className="text-xs text-green-600 hover:text-green-700 hover:underline transition-colors"
-              >
-                Mark all as read
-              </button>
-            )}
+        <>
+          {/* Mobile: Fixed positioning */}
+          <div className="sm:hidden fixed left-2 right-2 top-16 w-auto bg-white rounded-2xl shadow-xl shadow-green-900/10 border border-green-200 z-[60] overflow-hidden animate-scale-in">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-green-200 bg-green-50">
+              <span className="font-semibold text-sm text-green-900 whitespace-nowrap">
+                Notifications
+              </span>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllRead}
+                  className="text-xs text-green-600 hover:text-green-700 hover:underline transition-colors whitespace-nowrap ml-4"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
+
+            {/* List - Horizontal Scroll */}
+            <div className="overflow-x-auto overflow-y-hidden bg-white py-4">
+              {notifications.length === 0 ? (
+                <div className="py-6 text-center text-sm text-green-600/50">
+                  No notifications yet
+                </div>
+              ) : (
+                <div className="flex gap-3 px-4">
+                  {notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`flex-shrink-0 w-72 p-4 rounded-xl border transition-colors duration-200 ${
+                        !n.is_read 
+                          ? "bg-green-50 border-green-200" 
+                          : "bg-white border-green-100 hover:bg-green-50/50"
+                      }`}
+                    >
+                      <p className="text-sm text-green-900 break-words whitespace-normal line-clamp-3">{n.message}</p>
+                      <p className="text-xs text-green-600/60 mt-2 whitespace-nowrap">
+                        {timeAgo(n.created_at)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* List */}
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="py-10 text-center text-sm text-green-600/50">
-                No notifications yet
-              </div>
-            ) : (
-              notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={`px-4 py-3 border-b border-green-100/20 last:border-b-0 transition-colors duration-200 ${
-                    !n.is_read ? "bg-green-50/40" : "hover:bg-green-50/20"
-                  }`}
+          {/* Desktop: Absolute positioning below bell */}
+          <div className="hidden sm:block absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[600px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-xl shadow-green-900/10 border border-green-200 z-[60] overflow-hidden animate-scale-in">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-green-200 bg-green-50">
+              <span className="font-semibold text-sm text-green-900 whitespace-nowrap">
+                Notifications
+              </span>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllRead}
+                  className="text-xs text-green-600 hover:text-green-700 hover:underline transition-colors whitespace-nowrap ml-4"
                 >
-                  <p className="text-sm text-green-900">{n.message}</p>
-                  <p className="text-xs text-green-600/40 mt-1">
-                    {timeAgo(n.created_at)}
-                  </p>
+                  Mark all read
+                </button>
+              )}
+            </div>
+
+            {/* List - Horizontal Scroll */}
+            <div className="overflow-x-auto overflow-y-hidden bg-white py-4">
+              {notifications.length === 0 ? (
+                <div className="py-6 text-center text-sm text-green-600/50">
+                  No notifications yet
                 </div>
-              ))
-            )}
+              ) : (
+                <div className="flex gap-3 px-4">
+                  {notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`flex-shrink-0 w-72 p-4 rounded-xl border transition-colors duration-200 ${
+                        !n.is_read 
+                          ? "bg-green-50 border-green-200" 
+                          : "bg-white border-green-100 hover:bg-green-50/50"
+                      }`}
+                    >
+                      <p className="text-sm text-green-900 break-words whitespace-normal line-clamp-3">{n.message}</p>
+                      <p className="text-xs text-green-600/60 mt-2 whitespace-nowrap">
+                        {timeAgo(n.created_at)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

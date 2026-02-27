@@ -170,78 +170,78 @@ export default function TrustProfilePage() {
 
   return (
     <AppLayout>
-      <div className="p-8 space-y-8">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 w-full max-w-full overflow-x-hidden">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Trust Profile</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Trust Profile</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-2">
             Your reputation and trust metrics in the Krishi Exchange community
           </p>
         </div>
 
         {/* Main Profile Card */}
         <Card className="border-border">
-          <CardContent className="p-8">
-            <div className="flex items-start gap-8">
+          <CardContent className="p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6 sm:gap-8">
               {/* Trust Score Circle */}
               <div className="flex flex-col items-center">
-                <div className="w-40 h-40 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
+                <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
                   <div className="text-center">
-                    <p className="text-6xl font-bold text-primary-foreground">
+                    <p className="text-5xl sm:text-6xl font-bold text-primary-foreground">
                       {scoreOut5}
                     </p>
-                    <p className="text-sm text-primary-foreground/80">
+                    <p className="text-xs sm:text-sm text-primary-foreground/80">
                       out of 5
                     </p>
                   </div>
                 </div>
-                <Badge className="mt-6 bg-green-100/50 text-green-700 border-green-300 text-base px-4 py-2">
+                <Badge className="mt-4 sm:mt-6 bg-green-100/50 text-green-700 border-green-300 text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2">
                   ✓ Verified {role}
                 </Badge>
               </div>
 
               {/* Profile Info */}
-              <div className="flex-1 space-y-6">
-                <div>
-                  <h2 className="text-3xl font-bold text-foreground">
+              <div className="flex-1 space-y-4 sm:space-y-6 w-full">
+                <div className="text-center lg:text-left">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
                     {displayName}
                   </h2>
-                  <p className="text-muted-foreground mt-1">
+                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
                     Registered since {registeredSince}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-secondary/50 p-4 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="bg-secondary/50 p-3 sm:p-4 rounded-lg">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Total Transactions
                     </p>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-2xl sm:text-3xl font-bold text-foreground">
                       {total}
                     </p>
                   </div>
-                  <div className="bg-secondary/50 p-4 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="bg-secondary/50 p-3 sm:p-4 rounded-lg">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Successful Deals
                     </p>
-                    <p className="text-3xl font-bold text-primary">
+                    <p className="text-2xl sm:text-3xl font-bold text-primary">
                       {completed} {total > 0 ? `(${successRate}%)` : ""}
                     </p>
                   </div>
-                  <div className="bg-secondary/50 p-4 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="bg-secondary/50 p-3 sm:p-4 rounded-lg">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Failed / Rejected
                     </p>
-                    <p className="text-3xl font-bold text-destructive">
+                    <p className="text-2xl sm:text-3xl font-bold text-destructive">
                       {failed}
                     </p>
                   </div>
-                  <div className="bg-secondary/50 p-4 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="bg-secondary/50 p-3 sm:p-4 rounded-lg">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Member Status
                     </p>
                     <p
-                      className={`text-3xl font-bold ${memberStatusColor(status)}`}
+                      className={`text-2xl sm:text-3xl font-bold ${memberStatusColor(status)}`}
                     >
                       {status}
                     </p>
@@ -353,7 +353,7 @@ export default function TrustProfilePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {badges.map((badge, i) => (
                 <div
                   key={i}
