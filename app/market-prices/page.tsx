@@ -1,3 +1,5 @@
+"use client";
+
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -73,7 +75,7 @@ export default function MarketPricesPage() {
         </div>
 
         {/* Regional Price Comparison Chart */}
-        <Card className="border-border">
+        {/* <Card className="border-border">
           <CardHeader>
             <CardTitle>Regional Price Comparison</CardTitle>
             <CardDescription>Average crop prices across major regions</CardDescription>
@@ -99,7 +101,7 @@ export default function MarketPricesPage() {
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Price History Table */}
         <Card className="border-border">

@@ -14,7 +14,7 @@ const menuItems = [
   { icon: '🚚', label: 'Logistics', href: '/logistics' },
   { icon: '📈', label: 'Market Prices', href: '/market-prices' },
   { icon: '⭐', label: 'Trust Profile', href: '/trust-profile' },
-  { icon: '📊', label: 'Analytics', href: '/analytics' },
+  // { icon: '📊', label: 'Analytics', href: '/analytics' },
   { icon: '⚖️', label: 'Disputes', href: '/disputes' },
   { icon: '⚙️', label: 'Settings', href: '/settings' },
 ];
