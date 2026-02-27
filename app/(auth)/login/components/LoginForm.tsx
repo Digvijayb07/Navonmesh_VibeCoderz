@@ -58,13 +58,40 @@ export function LoginForm({
   };
 
   return (
-    <Card className={cn("shadow-lg w-full mx-auto", className)} {...props}>
-      <CardContent className="p-6">
+    <Card
+      className={cn(
+        "glass-card shadow-xl shadow-green-900/10 w-full mx-auto border-0 rounded-2xl",
+        className,
+      )}
+      {...props}
+    >
+      <CardContent className="p-8">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex flex-col items-center gap-2 text-center mb-6">
-            <h1 className="text-2xl font-bold">Welcome back</h1>
-            <p className="text-muted-foreground text-sm">
-              Login to your account
+          <div className="flex flex-col items-center gap-3 text-center mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-lg shadow-green-500/20 mb-1">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <h1
+              className="text-2xl font-bold gradient-text"
+              style={{ fontFamily: "var(--font-poppins)" }}
+            >
+              Welcome back
+            </h1>
+            <p className="text-green-700/50 text-sm">
+              Login to your FarmLink account
             </p>
           </div>
 
@@ -102,7 +129,8 @@ export function LoginForm({
                 <FieldLabel htmlFor="password">Password</FieldLabel>
                 <a
                   href="#"
-                  className="text-sm text-muted-foreground hover:underline">
+                  className="text-sm text-muted-foreground hover:underline"
+                >
                   Forgot password?
                 </a>
               </div>
@@ -119,7 +147,11 @@ export function LoginForm({
                 disabled={loading}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full btn-gradient text-white border-0 shadow-lg shadow-green-500/20 hover:shadow-green-500/40"
+              disabled={loading}
+            >
               {loading ? "Loading..." : "Login"}
             </Button>
           </div>
@@ -129,7 +161,7 @@ export function LoginForm({
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
+              <span className="bg-card px-2 text-green-600/40">
                 Or continue with
               </span>
             </div>

@@ -1,11 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import GoogleTranslateLoader from "@/components/google-translate";
 import "./globals.css";
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-poppins",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "FarmLink - Agricultural Exchange Platform",
@@ -37,8 +47,30 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${poppins.variable}`}
+    >
       <body className="font-sans antialiased" suppressHydrationWarning>
+        {/* Decorative background orbs */}
+        <div
+          className="orb-green"
+          style={{ width: "500px", height: "500px", top: "-10%", right: "-5%" }}
+        />
+        <div
+          className="orb-green"
+          style={{
+            width: "400px",
+            height: "400px",
+            bottom: "10%",
+            left: "-5%",
+          }}
+        />
+        <div
+          className="orb-amber"
+          style={{ width: "350px", height: "350px", top: "40%", right: "20%" }}
+        />
         <GoogleTranslateLoader />
         {children}
         <Analytics />
