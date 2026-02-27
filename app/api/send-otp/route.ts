@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     if (twilioClient && process.env.TWILIO_PHONE_NUMBER) {
       try {
         await twilioClient.messages.create({
-          body: `Your FarmLink verification code is: ${otp}. It expires in 5 minutes.`,
+          body: `Your Krishi Exchange verification code is: ${otp}. It expires in 5 minutes.`,
           from: process.env.TWILIO_PHONE_NUMBER,
           to: phone,
         });

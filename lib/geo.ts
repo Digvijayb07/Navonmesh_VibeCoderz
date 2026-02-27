@@ -47,7 +47,7 @@ export async function geocodeAddress(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1`,
       {
         headers: {
-          'User-Agent': 'Navonmesh/1.0 (navonmesh-marketplace)',
+          'User-Agent': 'KrishiExchange/1.0 (krishi-exchange-marketplace)',
         },
       }
     );

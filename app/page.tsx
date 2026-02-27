@@ -15,25 +15,25 @@ import {
 export default function DashboardPage() {
   return (
     <AppLayout>
-      <div className="p-8 space-y-8 relative">
+      <div className="p-8 lg:p-10 space-y-8 relative">
         {/* Decorative blur orbs */}
         <div className="absolute -top-20 -right-20 w-80 h-80 bg-green-300/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 -left-20 w-60 h-60 bg-amber-200/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Header */}
         <div className="animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-100/60 backdrop-blur-sm border border-green-200/40 text-green-700 text-xs font-medium mb-4 shadow-sm">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100/60 backdrop-blur-sm border border-green-200/40 text-green-700 text-sm font-medium mb-4 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             Dashboard Overview
           </div>
           <h1
-            className="text-4xl font-bold text-green-900 text-balance"
+            className="text-4xl lg:text-5xl font-bold text-green-900 text-balance"
             style={{ fontFamily: "var(--font-poppins)" }}
           >
-            Welcome to <span className="gradient-text">FarmLink</span>
+            Welcome to <span className="gradient-text">Krishi Exchange</span>
           </h1>
-          <p className="text-green-700/60 mt-2">
-            Your trusted agricultural exchange platform
+          <p className="text-green-700/60 mt-3 text-base">
+            Your trusted agricultural marketplace platform
           </p>
         </div>
 
@@ -188,18 +188,18 @@ function QuickActionCard({
   return (
     <a
       href={href}
-      className="quick-action-card p-5 rounded-2xl cursor-pointer group"
+      className="quick-action-card p-6 rounded-2xl cursor-pointer group"
     >
       <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">
         {icon}
       </div>
       <h3
-        className="font-semibold text-green-900"
+        className="font-semibold text-base text-green-900"
         style={{ fontFamily: "var(--font-poppins)" }}
       >
         {title}
       </h3>
-      <p className="text-sm text-green-700/50 mt-1">{description}</p>
+      <p className="text-sm text-green-700/50 mt-1.5">{description}</p>
     </a>
   );
 }

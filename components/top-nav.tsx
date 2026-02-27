@@ -50,13 +50,13 @@ export function TopNav() {
 
   return (
     <header className="glass-nav sticky top-0 z-40 shadow-sm shadow-green-900/5">
-      <div className="h-16 px-6 flex items-center justify-between gap-4">
+      <div className="h-[68px] px-8 flex items-center justify-between gap-5">
         {/* Search Bar */}
-        <div className="flex-1 max-w-md relative">
+        <div className="flex-1 max-w-lg relative">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500/50 z-10"
-            width="18"
-            height="18"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-green-500/50 z-10"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -72,12 +72,12 @@ export function TopNav() {
             placeholder="Search crops, prices, buyers..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl nav-search-input text-sm text-green-900 placeholder:text-green-500/40 focus:outline-none transition-all"
+            className="w-full pl-11 pr-4 py-3 rounded-xl nav-search-input text-sm text-green-900 placeholder:text-green-500/40 focus:outline-none transition-all"
           />
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {/* Notifications */}
           <NotificationBell userId={user?.id ?? null} />
           <div className="flex items-center gap-3">
@@ -94,11 +94,11 @@ export function TopNav() {
           {/* User Menu */}
           <div className="relative">
             <button
-              className="flex items-center gap-2.5 pl-3 pr-2 py-1.5 rounded-full hover:bg-green-50 transition-all duration-200"
+              className="flex items-center gap-3 pl-3 pr-2.5 py-2 rounded-full hover:bg-green-50 transition-all duration-200"
               title="User Menu"
               onClick={() => setMenuOpen((prev) => !prev)}
             >
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary flex items-center justify-center">
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-primary flex items-center justify-center">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
@@ -112,7 +112,7 @@ export function TopNav() {
                   </span>
                 )}
               </div>
-              <span className="text-sm font-medium text-foreground max-w-[120px] truncate">
+              <span className="text-sm font-medium text-foreground max-w-[140px] truncate">
                 {displayName}
               </span>
               <svg

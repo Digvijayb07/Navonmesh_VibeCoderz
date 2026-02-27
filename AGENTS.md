@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-FarmLink is an agricultural exchange platform connecting farmers, buyers, and transporters. Built with Next.js 16 (App Router), React 19, Supabase (auth + database), Tailwind CSS v4, and shadcn/ui.
+Krishi Exchange is an agricultural exchange platform connecting farmers, buyers, and transporters. Built with Next.js 16 (App Router), React 19, Supabase (auth + database), Tailwind CSS v4, and shadcn/ui.
 
 ## Build & Development Commands
 
@@ -30,6 +30,7 @@ Uses Next.js App Router with `app/` directory. All pages use the `(auth)` route 
 ### Supabase Integration
 
 Three Supabase client variants in `utils/supabase/`:
+
 - `client.ts` — Browser client (`createBrowserClient`). Also exports a singleton `supabase` instance.
 - `server.ts` — Server client (`createServerClient` with cookie access). Used in Server Components and Server Actions.
 - `middleware.ts` — Session refresh helper for Next.js middleware (exports `updateSession`). Note: no root `middleware.ts` file currently exists to call it.
@@ -45,6 +46,7 @@ Server Actions for auth live in `lib/auth-actions.ts` (`login`, `signup`, `signo
 ### Database Tables (Supabase)
 
 The app interacts with these Supabase tables:
+
 - **`profiles`** — User profiles (id, full_name, role, phone, phone_verified, phone_verified_at, village, district, state, trust_score, total_completed, total_failed). Upserted on signup and OAuth callback.
 - **`produce_listings`** — Crop listings (farmer_id, crop_name, quantity, unit, price_per_kg, quality_grade, location, status, latitude, longitude, address). Location columns added via `supabase_migration_location.sql`.
 - **`exchange_requests`** — Buy/barter requests linking a buyer to a listing (listing_id, buyer_id, quantity_requested, offer_crop_name, offer_quantity, offer_unit, status). Joined with `produce_listings` and `profiles` via foreign keys.
@@ -77,12 +79,14 @@ TypeScript path alias `@/*` maps to the project root (configured in `tsconfig.js
 ### Environment Variables
 
 Required in `.env.local`:
+
 - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anonymous key
 - `SUPABASE_SERVICE_ROLE_KEY` — Service role key (server-side only, used by `/api/buyer-info`)
 - `SITE_URL` / `NEXT_PUBLIC_SITE_URL` — Base URL for redirects
 
 Optional (for SMS OTP verification):
+
 - `TWILIO_ACCOUNT_SID` — Twilio account SID
 - `TWILIO_AUTH_TOKEN` — Twilio auth token
 - `TWILIO_PHONE_NUMBER` — Twilio sender phone number

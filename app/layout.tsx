@@ -18,7 +18,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "FarmLink - Agricultural Exchange Platform",
+  title: "Krishi Exchange - Agricultural Marketplace",
   description:
     "Connect farmers, buyers, transporters and rural stakeholders in a trustworthy agricultural marketplace",
   generator: "v0.app",

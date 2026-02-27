@@ -68,10 +68,10 @@ export function LoginForm({
       <CardContent className="p-8">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex flex-col items-center gap-3 text-center mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-lg shadow-green-500/20 mb-1">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-lg shadow-green-500/20 mb-1">
               <svg
-                width="24"
-                height="24"
+                width="28"
+                height="28"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="white"
@@ -91,7 +91,7 @@ export function LoginForm({
               Welcome back
             </h1>
             <p className="text-green-700/50 text-sm">
-              Login to your FarmLink account
+              Login to your Krishi Exchange account
             </p>
           </div>
 
