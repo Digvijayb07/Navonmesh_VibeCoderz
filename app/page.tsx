@@ -47,8 +47,8 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <QuickActionCard
             icon="📤"
-            title="List Crop"
-            description="Add new crop to sell"
+            title="List Item"
+            description="Add a crop or tool listing"
             href="/marketplace?action=list"
           />
           <QuickActionCard

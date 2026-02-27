@@ -36,6 +36,7 @@ const sellerIcon = new L.Icon({
 export interface MapListing {
   id: string;
   crop_name: string;
+  listing_type?: 'crop' | 'tool';
   price_per_kg: number;
   unit: string;
   location: string;
@@ -151,10 +152,12 @@ export default function MiniMarketMap({
             <Popup>
               <div style={{ minWidth: 140 }}>
                 <div className="font-semibold text-sm">
-                  🌾 {listing.crop_name}
+                  {listing.listing_type === 'tool' ? '🚜' : '🌾'} {listing.crop_name}
                 </div>
                 <div className="text-sm mt-1">
-                  ₹{listing.price_per_kg}/{listing.unit}
+                  {listing.listing_type === 'tool'
+                    ? `₹${listing.price_per_kg}/day`
+                    : `₹${listing.price_per_kg}/${listing.unit}`}
                 </div>
                 <div className="text-xs text-gray-500 mt-0.5">
                   📍 {listing.location}
