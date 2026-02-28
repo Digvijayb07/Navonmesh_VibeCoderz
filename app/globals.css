@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -100,11 +100,10 @@
   --sidebar-ring: #4ade80;
 }
 
-
 @theme inline {
-  --font-sans: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
-  --font-heading: 'Poppins', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: "Inter", "Poppins", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
+  --font-heading: "Poppins", "Inter", system-ui, -apple-system, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -180,7 +179,6 @@
    ═══════════════════════════════════════════ */
 
 @keyframes float {
-
   0%,
   100% {
     transform: translateY(0px) rotate(0deg);
@@ -192,7 +190,6 @@
 }
 
 @keyframes pulse-glow {
-
   0%,
   100% {
     box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
@@ -218,7 +215,6 @@
 }
 
 @keyframes bounce-gentle {
-
   0%,
   100% {
     transform: translateY(0);
@@ -366,7 +362,14 @@ html {
 }
 
 .gradient-hero {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 25%, #bbf7d0 50%, #f0fdf4 75%, #fefce8 100%);
+  background: linear-gradient(
+    135deg,
+    #f0fdf4 0%,
+    #dcfce7 25%,
+    #bbf7d0 50%,
+    #f0fdf4 75%,
+    #fefce8 100%
+  );
   background-size: 400% 400%;
   animation: gradient-shift 12s ease infinite;
 }
@@ -407,7 +410,7 @@ html {
 }
 
 .glow-border::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
   border-radius: inherit;
@@ -469,7 +472,11 @@ html {
    ═══════════════════════════════════════════ */
 
 .pattern-dots {
-  background-image: radial-gradient(circle, rgba(22, 163, 74, 0.07) 1px, transparent 1px);
+  background-image: radial-gradient(
+    circle,
+    rgba(22, 163, 74, 0.07) 1px,
+    transparent 1px
+  );
   background-size: 24px 24px;
 }
 
@@ -552,7 +559,11 @@ html {
    ═══════════════════════════════════════════ */
 
 .stat-card-gradient {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 253, 244, 0.8) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(240, 253, 244, 0.8) 100%
+  );
   backdrop-filter: blur(12px);
   border: 1px solid rgba(34, 197, 94, 0.12);
 }
@@ -575,7 +586,12 @@ html {
    ═══════════════════════════════════════════ */
 
 .shimmer {
-  background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.08), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(34, 197, 94, 0.08),
+    transparent
+  );
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }

@@ -50,9 +50,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         "w-64 glass-sidebar flex flex-col h-screen relative overflow-hidden transition-transform duration-300 ease-in-out z-50",
         "lg:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-        "fixed lg:relative"
-      )}
-    >
+        "fixed lg:relative",
+      )}>
       {/* Subtle pattern overlay */}
       <div className="absolute inset-0 pattern-dots opacity-30 pointer-events-none" />
 
@@ -63,9 +62,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <button
             onClick={onClose}
             className="lg:hidden absolute top-6 right-4 p-2 rounded-lg hover:bg-green-100/50 transition-colors"
-            aria-label="Close menu"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            aria-label="Close menu">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -79,8 +85,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               stroke="white"
               strokeWidth="2.5"
               strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+              strokeLinejoin="round">
               <path d="M12 2L2 7l10 5 10-5-10-5z" />
               <path d="M2 17l10 5 10-5" />
               <path d="M2 12l10 5 10-5" />
@@ -89,8 +94,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div>
             <h1
               className="font-bold text-xl text-green-900 leading-tight tracking-tight"
-              style={{ fontFamily: "var(--font-poppins)" }}
-            >
+              style={{ fontFamily: "var(--font-poppins)" }}>
               Krishi Exchange
             </h1>
             <p className="text-xs text-green-600/60 leading-tight mt-0.5">
@@ -114,8 +118,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 isActive
                   ? "sidebar-item-active"
                   : "text-green-800/70 sidebar-item-hover",
-              )}
-            >
+              )}>
               <span
                 className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-lg transition-colors duration-200"
                 style={{
@@ -123,8 +126,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     ? "rgba(255,255,255,0.2)"
                     : `${item.color}12`,
                   color: isActive ? "white" : item.color,
-                }}
-              >
+                }}>
                 {item.icon}
               </span>
               <span>{item.label}</span>

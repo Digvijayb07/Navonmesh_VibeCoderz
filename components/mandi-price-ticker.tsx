@@ -74,8 +74,7 @@ export function MandiPriceTicker() {
             return (
               <div
                 key={i}
-                className="inline-flex items-center gap-2 px-5 border-r border-green-100/30 shrink-0"
-              >
+                className="inline-flex items-center gap-2 px-5 border-r border-green-100/30 shrink-0">
                 <span>{getEmoji(r.commodity)}</span>
 
                 <span className="text-sm font-medium text-green-900">

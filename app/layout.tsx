@@ -55,9 +55,10 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${poppins.variable}`}
-    >
-      <body className="font-sans antialiased overflow-x-hidden" suppressHydrationWarning>
+      className={`${inter.variable} ${poppins.variable}`}>
+      <body
+        className="font-sans antialiased overflow-x-hidden"
+        suppressHydrationWarning>
         {/* Decorative background orbs */}
         <div
           className="orb-green"

@@ -28,8 +28,7 @@ export default function DashboardPage() {
           </div>
           <h1
             className="text-2xl sm:text-3xl lg:text-5xl font-bold text-green-900 text-balance"
-            style={{ fontFamily: "var(--font-poppins)" }}
-          >
+            style={{ fontFamily: "var(--font-poppins)" }}>
             Welcome to <span className="gradient-text">Krishi Exchange</span>
           </h1>
           <p className="text-green-700/60 mt-2 sm:mt-3 text-sm sm:text-base">
@@ -91,8 +90,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle
               className="text-green-900"
-              style={{ fontFamily: "var(--font-poppins)" }}
-            >
+              style={{ fontFamily: "var(--font-poppins)" }}>
               Recent Transactions
             </CardTitle>
             <CardDescription className="text-green-700/50">
@@ -128,8 +126,7 @@ export default function DashboardPage() {
               ].map((tx, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between p-3 bg-green-50/50 backdrop-blur-sm rounded-xl border border-green-100/30 hover:bg-green-50/80 transition-all duration-200 hover:shadow-sm"
-                >
+                  className="flex items-center justify-between p-3 bg-green-50/50 backdrop-blur-sm rounded-xl border border-green-100/30 hover:bg-green-50/80 transition-all duration-200 hover:shadow-sm">
                   <div className="flex items-center gap-3">
                     <span className="text-lg w-10 h-10 rounded-xl bg-white/60 flex items-center justify-center shadow-sm">
                       {tx.type === "sale" && "📦"}
@@ -159,8 +156,7 @@ export default function DashboardPage() {
                           : tx.status === "pending"
                             ? "bg-amber-100/60 text-amber-700 border border-amber-200/40"
                             : "bg-blue-100/60 text-blue-700 border border-blue-200/40"
-                      }`}
-                    >
+                      }`}>
                       {tx.status}
                     </span>
                   </div>
@@ -188,15 +184,13 @@ function QuickActionCard({
   return (
     <a
       href={href}
-      className="quick-action-card p-6 rounded-2xl cursor-pointer group"
-    >
+      className="quick-action-card p-6 rounded-2xl cursor-pointer group">
       <div className="text-3xl mb-3 group-hover:scale-110 transition-transform duration-300">
         {icon}
       </div>
       <h3
         className="font-semibold text-base text-green-900"
-        style={{ fontFamily: "var(--font-poppins)" }}
-      >
+        style={{ fontFamily: "var(--font-poppins)" }}>
         {title}
       </h3>
       <p className="text-sm text-green-700/50 mt-1.5">{description}</p>

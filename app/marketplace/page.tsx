@@ -169,7 +169,10 @@ const RADIUS_OPTIONS = [
 
 type ListingTypeFilter = "all" | "crop" | "tool";
 
-function itemEmoji(name: string, listingType: "crop" | "tool" = "crop"): string {
+function itemEmoji(
+  name: string,
+  listingType: "crop" | "tool" = "crop",
+): string {
   const n = name.toLowerCase();
   if (listingType === "tool") {
     if (n.includes("tractor")) return "🚜";
@@ -462,9 +465,10 @@ export default function MarketplacePage() {
       price_per_kg: parseFloat(listForm.price),
       quality_grade: isTool ? null : listForm.quality,
       condition: isTool ? listForm.toolCondition : null,
-      rental_price_per_day: isTool && listForm.rentalPricePerDay
-        ? parseFloat(listForm.rentalPricePerDay)
-        : null,
+      rental_price_per_day:
+        isTool && listForm.rentalPricePerDay
+          ? parseFloat(listForm.rentalPricePerDay)
+          : null,
       location: listForm.region,
       status: "available",
       latitude: sellerCoords.latitude ?? null,
@@ -542,10 +546,12 @@ export default function MarketplacePage() {
       quantity_requested: qty,
       offer_type: buyForm.offer_type,
       offer_crop_name: buyForm.offer_crop_name || null,
-      offer_quantity: buyForm.offer_type === "crop" && buyForm.offer_quantity
-        ? parseFloat(buyForm.offer_quantity)
-        : null,
-      offer_unit: buyForm.offer_type === "crop" ? (buyForm.offer_unit || null) : "piece",
+      offer_quantity:
+        buyForm.offer_type === "crop" && buyForm.offer_quantity
+          ? parseFloat(buyForm.offer_quantity)
+          : null,
+      offer_unit:
+        buyForm.offer_type === "crop" ? buyForm.offer_unit || null : "piece",
       status: "pending",
     });
 
@@ -571,8 +577,7 @@ export default function MarketplacePage() {
     <svg
       className={`animate-spin ${className}`}
       viewBox="0 0 24 24"
-      fill="none"
-    >
+      fill="none">
       <circle
         className="opacity-25"
         cx="12"
@@ -603,26 +608,31 @@ export default function MarketplacePage() {
           </div>
           <Button
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            onClick={() => setShowListModal(true)}
-          >
+            onClick={() => setShowListModal(true)}>
             + List Item
           </Button>
         </div>
 
         {/* Category filter tabs */}
         <div className="flex gap-2">
-          {([
+          {[
             { label: "All", value: "all" as ListingTypeFilter },
             { label: "🌾 Crops", value: "crop" as ListingTypeFilter },
-            { label: "🚜 Tools & Equipment", value: "tool" as ListingTypeFilter },
-          ]).map((tab) => (
+            {
+              label: "🚜 Tools & Equipment",
+              value: "tool" as ListingTypeFilter,
+            },
+          ].map((tab) => (
             <Button
               key={tab.value}
               variant="outline"
               size="sm"
               onClick={() => setFilterType(tab.value)}
-              className={filterType === tab.value ? "bg-primary/10 border-primary text-primary" : ""}
-            >
+              className={
+                filterType === tab.value
+                  ? "bg-primary/10 border-primary text-primary"
+                  : ""
+              }>
               {tab.label}
             </Button>
           ))}
@@ -639,8 +649,7 @@ export default function MarketplacePage() {
               {buyerLocation && (
                 <Badge
                   variant="outline"
-                  className="bg-green-100/50 text-green-700 border-green-300 ml-auto text-xs"
-                >
+                  className="bg-green-100/50 text-green-700 border-green-300 ml-auto text-xs">
                   📍 Nearest First
                 </Badge>
               )}
@@ -652,8 +661,7 @@ export default function MarketplacePage() {
                 size="sm"
                 onClick={handleDetectLocation}
                 disabled={buyerLocLoading}
-                className="gap-2"
-              >
+                className="gap-2">
                 {buyerLocLoading ? <Spinner /> : <span>📡</span>}
                 Detect My Location
               </Button>
@@ -661,8 +669,7 @@ export default function MarketplacePage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowManualAddress(!showManualAddress)}
-              >
+                onClick={() => setShowManualAddress(!showManualAddress)}>
                 ✏️ Enter Address Manually
               </Button>
 
@@ -671,8 +678,7 @@ export default function MarketplacePage() {
                   <select
                     className="px-3 py-1.5 rounded-lg border border-border bg-background text-foreground text-sm"
                     value={radiusFilter}
-                    onChange={(e) => setRadiusFilter(Number(e.target.value))}
-                  >
+                    onChange={(e) => setRadiusFilter(Number(e.target.value))}>
                     {RADIUS_OPTIONS.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
@@ -688,8 +694,7 @@ export default function MarketplacePage() {
                       setBuyerLocation(null);
                       setRadiusFilter(0);
                       setBuyerLocError(null);
-                    }}
-                  >
+                    }}>
                     ✕ Clear Location
                   </Button>
                 </>
@@ -715,8 +720,7 @@ export default function MarketplacePage() {
                   variant="outline"
                   size="sm"
                   onClick={handleManualGeocode}
-                  disabled={buyerLocLoading || !manualAddress.trim()}
-                >
+                  disabled={buyerLocLoading || !manualAddress.trim()}>
                   {buyerLocLoading ? <Spinner /> : "Search"}
                 </Button>
               </div>
@@ -761,8 +765,7 @@ export default function MarketplacePage() {
           <select
             className="px-4 py-2 rounded-lg border border-border bg-background text-foreground"
             value={filterRegion}
-            onChange={(e) => setFilterRegion(e.target.value)}
-          >
+            onChange={(e) => setFilterRegion(e.target.value)}>
             <option value="">All Regions</option>
             {REGIONS.map((r) => (
               <option key={r} value={r}>
@@ -773,8 +776,7 @@ export default function MarketplacePage() {
           <select
             className="px-4 py-2 rounded-lg border border-border bg-background text-foreground"
             value={filterQuality}
-            onChange={(e) => setFilterQuality(e.target.value)}
-          >
+            onChange={(e) => setFilterQuality(e.target.value)}>
             <option value="">All Quality</option>
             {QUALITIES.map((q) => (
               <option key={q} value={q}>
@@ -821,15 +823,13 @@ export default function MarketplacePage() {
               <Button
                 className="mt-6"
                 variant="outline"
-                onClick={() => setRadiusFilter(0)}
-              >
+                onClick={() => setRadiusFilter(0)}>
                 Show All Listings
               </Button>
             ) : (
               <Button
                 className="mt-6 bg-primary hover:bg-primary/90"
-                onClick={() => setShowListModal(true)}
-              >
+                onClick={() => setShowListModal(true)}>
                 + List Your Crops
               </Button>
             )}
@@ -856,8 +856,7 @@ export default function MarketplacePage() {
             {sortedListings.map((listing) => (
               <Card
                 key={listing.id}
-                className="border-border overflow-hidden hover:shadow-lg transition-shadow"
-              >
+                className="border-border overflow-hidden hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="text-5xl mb-4">
                     {itemEmoji(listing.crop_name, listing.listing_type)}
@@ -868,10 +867,11 @@ export default function MarketplacePage() {
                   <div className="flex items-center gap-2 mt-1">
                     <Badge
                       variant="outline"
-                      className={listing.listing_type === "tool"
-                        ? "text-[10px] px-1.5 py-0 bg-orange-100/50 text-orange-700 border-orange-300"
-                        : "text-[10px] px-1.5 py-0 bg-emerald-100/50 text-emerald-700 border-emerald-300"}
-                    >
+                      className={
+                        listing.listing_type === "tool"
+                          ? "text-[10px] px-1.5 py-0 bg-orange-100/50 text-orange-700 border-orange-300"
+                          : "text-[10px] px-1.5 py-0 bg-emerald-100/50 text-emerald-700 border-emerald-300"
+                      }>
                       {listing.listing_type === "tool" ? "🚜 Tool" : "🌾 Crop"}
                     </Badge>
                     <p className="text-xs text-muted-foreground font-mono truncate">
@@ -880,8 +880,7 @@ export default function MarketplacePage() {
                     </p>
                     <Badge
                       variant="outline"
-                      className="text-[10px] px-1.5 py-0 bg-yellow-100/50 text-yellow-700 border-yellow-300"
-                    >
+                      className="text-[10px] px-1.5 py-0 bg-yellow-100/50 text-yellow-700 border-yellow-300">
                       ⭐{" "}
                       {((listing.profiles?.trust_score ?? 50) / 20).toFixed(1)}
                       /5
@@ -900,21 +899,29 @@ export default function MarketplacePage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Price:</span>
                       <span className="font-bold text-primary">
-                        ₹{listing.price_per_kg}/{listing.listing_type === "tool" ? "piece" : listing.unit}
+                        ₹{listing.price_per_kg}/
+                        {listing.listing_type === "tool"
+                          ? "piece"
+                          : listing.unit}
                       </span>
                     </div>
-                    {listing.listing_type === "tool" && listing.rental_price_per_day && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Rental:</span>
-                        <span className="font-bold text-orange-600">
-                          ₹{listing.rental_price_per_day}/day
-                        </span>
-                      </div>
-                    )}
+                    {listing.listing_type === "tool" &&
+                      listing.rental_price_per_day && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Rental:</span>
+                          <span className="font-bold text-orange-600">
+                            ₹{listing.rental_price_per_day}/day
+                          </span>
+                        </div>
+                      )}
                     {listing.listing_type === "tool" && listing.condition && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Condition:</span>
-                        <span className="text-foreground">{listing.condition}</span>
+                        <span className="text-muted-foreground">
+                          Condition:
+                        </span>
+                        <span className="text-foreground">
+                          {listing.condition}
+                        </span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
@@ -935,23 +942,22 @@ export default function MarketplacePage() {
                   </div>
 
                   <div className="mt-4 flex gap-2 flex-wrap">
-                    {listing.listing_type === "crop" && listing.quality_grade && (
-                      <Badge variant="outline" className="bg-secondary/50">
-                        {listing.quality_grade}
-                      </Badge>
-                    )}
+                    {listing.listing_type === "crop" &&
+                      listing.quality_grade && (
+                        <Badge variant="outline" className="bg-secondary/50">
+                          {listing.quality_grade}
+                        </Badge>
+                      )}
                     <Badge
                       variant="outline"
-                      className="bg-green-100/50 text-green-700 border-green-300"
-                    >
+                      className="bg-green-100/50 text-green-700 border-green-300">
                       ● Available
                     </Badge>
                     {listing._distance !== undefined &&
                       listing._distance <= 25 && (
                         <Badge
                           variant="outline"
-                          className="bg-blue-100/50 text-blue-700 border-blue-300"
-                        >
+                          className="bg-blue-100/50 text-blue-700 border-blue-300">
                           📍 Nearby
                         </Badge>
                       )}
@@ -960,8 +966,7 @@ export default function MarketplacePage() {
                   <div className="mt-6 flex gap-2">
                     <Button
                       className="flex-1 bg-primary hover:bg-primary/90"
-                      onClick={() => openBuyModal(listing)}
-                    >
+                      onClick={() => openBuyModal(listing)}>
                       {listing.listing_type === "tool" ? "Exchange" : "Buy Now"}
                     </Button>
                     <Button variant="outline" className="flex-1">
@@ -983,22 +988,23 @@ export default function MarketplacePage() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) closeListModal();
-          }}
-        >
+          }}>
           <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-border sticky top-0 bg-background z-10">
               <div>
                 <h2 className="text-xl font-bold text-foreground">
-                  {listForm.listingType === "tool" ? "List a Tool / Equipment" : "List Your Crop"}
+                  {listForm.listingType === "tool"
+                    ? "List a Tool / Equipment"
+                    : "List Your Crop"}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Fill in the details to list your {listForm.listingType === "tool" ? "tool" : "crop"}
+                  Fill in the details to list your{" "}
+                  {listForm.listingType === "tool" ? "tool" : "crop"}
                 </p>
               </div>
               <button
                 onClick={closeListModal}
-                className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors text-lg"
-              >
+                className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors text-lg">
                 ✕
               </button>
             </div>
@@ -1017,8 +1023,7 @@ export default function MarketplacePage() {
                 </p>
                 <Button
                   className="mt-8 bg-primary hover:bg-primary/90"
-                  onClick={closeListModal}
-                >
+                  onClick={closeListModal}>
                   Back to Marketplace
                 </Button>
               </div>
@@ -1033,27 +1038,32 @@ export default function MarketplacePage() {
                 {/* Listing type toggle */}
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
-                    What are you listing? <span className="text-destructive">*</span>
+                    What are you listing?{" "}
+                    <span className="text-destructive">*</span>
                   </label>
                   <div className="flex gap-2">
-                    <button type="button"
-                      onClick={() => setListForm(p => ({ ...p, listingType: "crop" }))}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setListForm((p) => ({ ...p, listingType: "crop" }))
+                      }
                       className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${
                         listForm.listingType === "crop"
                           ? "bg-primary/10 border-primary text-primary"
                           : "border-border text-muted-foreground hover:bg-secondary"
-                      }`}
-                    >
+                      }`}>
                       🌾 Crop
                     </button>
-                    <button type="button"
-                      onClick={() => setListForm(p => ({ ...p, listingType: "tool" }))}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setListForm((p) => ({ ...p, listingType: "tool" }))
+                      }
                       className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-colors ${
                         listForm.listingType === "tool"
                           ? "bg-primary/10 border-primary text-primary"
                           : "border-border text-muted-foreground hover:bg-secondary"
-                      }`}
-                    >
+                      }`}>
                       🚜 Tool / Equipment
                     </button>
                   </div>
@@ -1061,29 +1071,46 @@ export default function MarketplacePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
-                    {listForm.listingType === "tool" ? "Tool Name" : "Crop Name"} <span className="text-destructive">*</span>
+                    {listForm.listingType === "tool"
+                      ? "Tool Name"
+                      : "Crop Name"}{" "}
+                    <span className="text-destructive">*</span>
                   </label>
                   <Input
                     name="cropName"
                     value={listForm.cropName}
                     onChange={handleListChange}
-                    placeholder={listForm.listingType === "tool" ? "e.g. Mahindra 575 Tractor" : "e.g. Premium Basmati Rice"}
+                    placeholder={
+                      listForm.listingType === "tool"
+                        ? "e.g. Mahindra 575 Tractor"
+                        : "e.g. Premium Basmati Rice"
+                    }
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
-                    {listForm.listingType === "tool" ? "Tool Type" : "Crop Type"} <span className="text-destructive">*</span>
+                    {listForm.listingType === "tool"
+                      ? "Tool Type"
+                      : "Crop Type"}{" "}
+                    <span className="text-destructive">*</span>
                   </label>
                   <select
                     name="cropType"
                     value={listForm.cropType}
                     onChange={handleListChange}
                     required
-                    className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="">Select {listForm.listingType === "tool" ? "tool type" : "crop type"}</option>
-                    {(listForm.listingType === "tool" ? TOOL_TYPES : CROP_TYPES).map((c) => (
+                    className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    <option value="">
+                      Select{" "}
+                      {listForm.listingType === "tool"
+                        ? "tool type"
+                        : "crop type"}
+                    </option>
+                    {(listForm.listingType === "tool"
+                      ? TOOL_TYPES
+                      : CROP_TYPES
+                    ).map((c) => (
                       <option key={c} value={c}>
                         {c}
                       </option>
@@ -1116,8 +1143,7 @@ export default function MarketplacePage() {
                         name="unit"
                         value={listForm.unit}
                         onChange={handleListChange}
-                        className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      >
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                         <option value="kg">kg</option>
                         <option value="quintal">Quintal</option>
                         <option value="ton">Ton</option>
@@ -1138,11 +1164,12 @@ export default function MarketplacePage() {
                       value={listForm.toolCondition}
                       onChange={handleListChange}
                       required
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    >
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                       <option value="">Select condition</option>
                       {TOOL_CONDITIONS.map((c) => (
-                        <option key={c} value={c}>{c}</option>
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -1150,7 +1177,9 @@ export default function MarketplacePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
-                    {listForm.listingType === "tool" ? "Price (₹)" : `Price per ${listForm.unit} (₹)`}{" "}
+                    {listForm.listingType === "tool"
+                      ? "Price (₹)"
+                      : `Price per ${listForm.unit} (₹)`}{" "}
                     <span className="text-destructive">*</span>
                   </label>
                   <Input
@@ -1159,7 +1188,9 @@ export default function MarketplacePage() {
                     min="1"
                     value={listForm.price}
                     onChange={handleListChange}
-                    placeholder={listForm.listingType === "tool" ? "e.g. 50000" : "e.g. 25"}
+                    placeholder={
+                      listForm.listingType === "tool" ? "e.g. 50000" : "e.g. 25"
+                    }
                     required
                   />
                 </div>
@@ -1168,7 +1199,10 @@ export default function MarketplacePage() {
                 {listForm.listingType === "tool" && (
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">
-                      Rental Price per Day (₹) <span className="text-xs text-muted-foreground">(optional)</span>
+                      Rental Price per Day (₹){" "}
+                      <span className="text-xs text-muted-foreground">
+                        (optional)
+                      </span>
                     </label>
                     <Input
                       name="rentalPricePerDay"
@@ -1192,8 +1226,7 @@ export default function MarketplacePage() {
                       value={listForm.quality}
                       onChange={handleListChange}
                       required
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    >
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                       <option value="">Select quality</option>
                       {QUALITIES.map((q) => (
                         <option key={q} value={q}>
@@ -1212,8 +1245,7 @@ export default function MarketplacePage() {
                     value={listForm.region}
                     onChange={handleListChange}
                     required
-                    className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
+                    className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                     <option value="">Select region</option>
                     {REGIONS.map((r) => (
                       <option key={r} value={r}>
@@ -1242,8 +1274,7 @@ export default function MarketplacePage() {
                       size="sm"
                       onClick={handleSellerDetectLocation}
                       disabled={geoLoading}
-                      className="gap-2"
-                    >
+                      className="gap-2">
                       {geoLoading && !showSellerManualAddress ? (
                         <Spinner />
                       ) : (
@@ -1258,8 +1289,7 @@ export default function MarketplacePage() {
                       size="sm"
                       onClick={() =>
                         setShowSellerManualAddress(!showSellerManualAddress)
-                      }
-                    >
+                      }>
                       ✏️ Enter Address Manually
                     </Button>
 
@@ -1276,8 +1306,7 @@ export default function MarketplacePage() {
                             display_name: "",
                           });
                           setGeoError(null);
-                        }}
-                      >
+                        }}>
                         ✕ Clear
                       </Button>
                     )}
@@ -1304,8 +1333,7 @@ export default function MarketplacePage() {
                         variant="outline"
                         size="sm"
                         onClick={handleSellerManualGeocode}
-                        disabled={geoLoading || !listForm.sellerAddress.trim()}
-                      >
+                        disabled={geoLoading || !listForm.sellerAddress.trim()}>
                         {geoLoading && showSellerManualAddress ? (
                           <Spinner />
                         ) : (
@@ -1324,8 +1352,7 @@ export default function MarketplacePage() {
                         </p>
                         <p
                           className="text-xs text-muted-foreground mt-1 truncate"
-                          title={sellerCoords.display_name}
-                        >
+                          title={sellerCoords.display_name}>
                           📍 {sellerCoords.display_name}
                         </p>
                       </div>
@@ -1366,22 +1393,22 @@ export default function MarketplacePage() {
                     type="button"
                     variant="outline"
                     className="flex-1"
-                    onClick={closeListModal}
-                  >
+                    onClick={closeListModal}>
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                    disabled={listLoading}
-                  >
+                    disabled={listLoading}>
                     {listLoading ? (
                       <span className="flex items-center gap-2">
                         <Spinner />
                         Submitting...
                       </span>
+                    ) : listForm.listingType === "tool" ? (
+                      "List Tool"
                     ) : (
-                      listForm.listingType === "tool" ? "List Tool" : "List Crop"
+                      "List Crop"
                     )}
                   </Button>
                 </div>
@@ -1399,22 +1426,23 @@ export default function MarketplacePage() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) closeBuyModal();
-          }}
-        >
+          }}>
           <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between px-6 py-5 border-b border-border">
               <div>
                 <h2 className="text-xl font-bold text-foreground">
-                  {selectedListing.listing_type === "tool" ? "Place Exchange Request" : "Place Buy Request"}
+                  {selectedListing.listing_type === "tool"
+                    ? "Place Exchange Request"
+                    : "Place Buy Request"}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Submit a request to the {selectedListing.listing_type === "tool" ? "owner" : "farmer"}
+                  Submit a request to the{" "}
+                  {selectedListing.listing_type === "tool" ? "owner" : "farmer"}
                 </p>
               </div>
               <button
                 onClick={closeBuyModal}
-                className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors text-lg"
-              >
+                className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors text-lg">
                 ✕
               </button>
             </div>
@@ -1447,8 +1475,7 @@ export default function MarketplacePage() {
                 </p>
                 <Button
                   className="mt-8 bg-primary hover:bg-primary/90"
-                  onClick={closeBuyModal}
-                >
+                  onClick={closeBuyModal}>
                   Back to Marketplace
                 </Button>
               </div>
@@ -1457,7 +1484,10 @@ export default function MarketplacePage() {
                 {/* Item Summary */}
                 <div className="rounded-xl bg-secondary/30 border border-border p-4 flex gap-4 items-center">
                   <span className="text-4xl">
-                    {itemEmoji(selectedListing.crop_name, selectedListing.listing_type)}
+                    {itemEmoji(
+                      selectedListing.crop_name,
+                      selectedListing.listing_type,
+                    )}
                   </span>
                   <div>
                     <p className="font-bold text-foreground">
@@ -1465,17 +1495,29 @@ export default function MarketplacePage() {
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {selectedListing.location} ·{" "}
-                      {selectedListing.listing_type === "tool" ? selectedListing.condition : selectedListing.quality_grade}
+                      {selectedListing.listing_type === "tool"
+                        ? selectedListing.condition
+                        : selectedListing.quality_grade}
                     </p>
                     <p className="text-sm font-semibold text-primary mt-1">
-                      ₹{selectedListing.price_per_kg}/{selectedListing.listing_type === "tool" ? "piece" : selectedListing.unit}
-                      {selectedListing.listing_type === "crop" && <> · Available: {selectedListing.quantity} {selectedListing.unit}</>}
+                      ₹{selectedListing.price_per_kg}/
+                      {selectedListing.listing_type === "tool"
+                        ? "piece"
+                        : selectedListing.unit}
+                      {selectedListing.listing_type === "crop" && (
+                        <>
+                          {" "}
+                          · Available: {selectedListing.quantity}{" "}
+                          {selectedListing.unit}
+                        </>
+                      )}
                     </p>
-                    {selectedListing.listing_type === "tool" && selectedListing.rental_price_per_day && (
-                      <p className="text-sm font-semibold text-orange-600 mt-0.5">
-                        ₹{selectedListing.rental_price_per_day}/day rental
-                      </p>
-                    )}
+                    {selectedListing.listing_type === "tool" &&
+                      selectedListing.rental_price_per_day && (
+                        <p className="text-sm font-semibold text-orange-600 mt-0.5">
+                          ₹{selectedListing.rental_price_per_day}/day rental
+                        </p>
+                      )}
                     {/* Distance info in buy modal */}
                     {buyerLocation &&
                       selectedListing.latitude != null &&
@@ -1544,41 +1586,60 @@ export default function MarketplacePage() {
 
                   {/* Offer type toggle */}
                   <div className="flex gap-2">
-                    <button type="button"
-                      onClick={() => setBuyForm(p => ({ ...p, offer_type: "crop", offer_crop_name: "" }))}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setBuyForm((p) => ({
+                          ...p,
+                          offer_type: "crop",
+                          offer_crop_name: "",
+                        }))
+                      }
                       className={`flex-1 py-1.5 px-3 rounded-lg border text-xs font-medium transition-colors ${
                         buyForm.offer_type === "crop"
                           ? "bg-primary/10 border-primary text-primary"
                           : "border-border text-muted-foreground hover:bg-secondary"
-                      }`}
-                    >
+                      }`}>
                       🌾 Offer a Crop
                     </button>
-                    <button type="button"
-                      onClick={() => setBuyForm(p => ({ ...p, offer_type: "tool", offer_crop_name: "" }))}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setBuyForm((p) => ({
+                          ...p,
+                          offer_type: "tool",
+                          offer_crop_name: "",
+                        }))
+                      }
                       className={`flex-1 py-1.5 px-3 rounded-lg border text-xs font-medium transition-colors ${
                         buyForm.offer_type === "tool"
                           ? "bg-primary/10 border-primary text-primary"
                           : "border-border text-muted-foreground hover:bg-secondary"
-                      }`}
-                    >
+                      }`}>
                       🚜 Offer a Tool
                     </button>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">
-                      {buyForm.offer_type === "tool" ? "Tool to Offer" : "Crop to Offer"} <span className="text-destructive">*</span>
+                      {buyForm.offer_type === "tool"
+                        ? "Tool to Offer"
+                        : "Crop to Offer"}{" "}
+                      <span className="text-destructive">*</span>
                     </label>
                     <select
                       name="offer_crop_name"
                       value={buyForm.offer_crop_name}
                       onChange={handleBuyChange}
                       required
-                      className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    >
-                      <option value="">Select {buyForm.offer_type === "tool" ? "tool" : "crop"}</option>
-                      {(buyForm.offer_type === "tool" ? TOOL_TYPES : CROP_TYPES).map((c) => (
+                      className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                      <option value="">
+                        Select {buyForm.offer_type === "tool" ? "tool" : "crop"}
+                      </option>
+                      {(buyForm.offer_type === "tool"
+                        ? TOOL_TYPES
+                        : CROP_TYPES
+                      ).map((c) => (
                         <option key={c} value={c}>
                           {c}
                         </option>
@@ -1611,8 +1672,7 @@ export default function MarketplacePage() {
                           name="offer_unit"
                           value={buyForm.offer_unit}
                           onChange={handleBuyChange}
-                          className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        >
+                          className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                           <option value="kg">kg</option>
                           <option value="quintal">Quintal</option>
                           <option value="ton">Ton</option>
@@ -1633,11 +1693,12 @@ export default function MarketplacePage() {
                         value={buyForm.offer_tool_condition}
                         onChange={handleBuyChange}
                         required
-                        className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      >
+                        className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                         <option value="">Select condition</option>
                         {TOOL_CONDITIONS.map((c) => (
-                          <option key={c} value={c}>{c}</option>
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -1649,15 +1710,13 @@ export default function MarketplacePage() {
                     type="button"
                     variant="outline"
                     className="flex-1"
-                    onClick={closeBuyModal}
-                  >
+                    onClick={closeBuyModal}>
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                    disabled={buyLoading}
-                  >
+                    disabled={buyLoading}>
                     {buyLoading ? (
                       <span className="flex items-center gap-2">
                         <Spinner />

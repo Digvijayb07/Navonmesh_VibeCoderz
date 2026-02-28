@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { AppLayout } from '@/components/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { useState, useEffect, useCallback } from "react";
+import { AppLayout } from "@/components/app-layout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -14,14 +20,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
   InputOTPSeparator,
-} from '@/components/ui/input-otp';
-import { createClient } from '@/utils/supabase/client';
+} from "@/components/ui/input-otp";
+import { createClient } from "@/utils/supabase/client";
 
 interface Profile {
   full_name: string | null;
@@ -42,30 +48,30 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [userEmail, setUserEmail] = useState<string>('');
-  const [userCreatedAt, setUserCreatedAt] = useState<string>('');
-  const [userId, setUserId] = useState<string>('');
-  const [avatarLetter, setAvatarLetter] = useState('U');
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [userCreatedAt, setUserCreatedAt] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
+  const [avatarLetter, setAvatarLetter] = useState("U");
 
   // Editable fields
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [village, setVillage] = useState('');
-  const [district, setDistrict] = useState('');
-  const [state, setState] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [village, setVillage] = useState("");
+  const [district, setDistrict] = useState("");
+  const [state, setState] = useState("");
 
   // OTP verification state
   const [otpDialogOpen, setOtpDialogOpen] = useState(false);
-  const [otpStep, setOtpStep] = useState<'phone' | 'verify'>('phone');
-  const [otpPhone, setOtpPhone] = useState('');
-  const [otpValue, setOtpValue] = useState('');
+  const [otpStep, setOtpStep] = useState<"phone" | "verify">("phone");
+  const [otpPhone, setOtpPhone] = useState("");
+  const [otpValue, setOtpValue] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
-  const [otpMessage, setOtpMessage] = useState('');
-  const [otpError, setOtpError] = useState('');
-  const [devOtp, setDevOtp] = useState('');
+  const [otpMessage, setOtpMessage] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [devOtp, setDevOtp] = useState("");
 
   // Save feedback
-  const [saveMessage, setSaveMessage] = useState('');
+  const [saveMessage, setSaveMessage] = useState("");
 
   const loadProfile = useCallback(async () => {
     const {
@@ -77,32 +83,32 @@ export default function ProfilePage() {
     }
 
     setUserId(user.id);
-    setUserEmail(user.email ?? '');
+    setUserEmail(user.email ?? "");
     setUserCreatedAt(user.created_at);
 
     const displayName =
       user.user_metadata?.full_name ??
       user.user_metadata?.name ??
-      user.email?.split('@')[0] ??
-      'User';
+      user.email?.split("@")[0] ??
+      "User";
     setAvatarLetter(displayName.charAt(0).toUpperCase());
 
     const { data } = await supabase
-      .from('profiles')
+      .from("profiles")
       .select(
-        'full_name, role, phone, phone_verified, village, district, state, trust_score, total_completed, total_failed'
+        "full_name, role, phone, phone_verified, village, district, state, trust_score, total_completed, total_failed",
       )
-      .eq('id', user.id)
+      .eq("id", user.id)
       .single();
 
     if (data) {
       const p = data as Profile;
       setProfile(p);
       setFullName(p.full_name ?? displayName);
-      setPhone(p.phone ?? '');
-      setVillage(p.village ?? '');
-      setDistrict(p.district ?? '');
-      setState(p.state ?? '');
+      setPhone(p.phone ?? "");
+      setVillage(p.village ?? "");
+      setDistrict(p.district ?? "");
+      setState(p.state ?? "");
     } else {
       setFullName(displayName);
     }
@@ -117,104 +123,102 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     if (!userId) return;
     setSaving(true);
-    setSaveMessage('');
+    setSaveMessage("");
 
-    const { error } = await supabase
-      .from('profiles')
-      .upsert(
-        {
-          id: userId,
-          full_name: fullName,
-          village,
-          district,
-          state,
-        },
-        { onConflict: 'id' }
-      );
+    const { error } = await supabase.from("profiles").upsert(
+      {
+        id: userId,
+        full_name: fullName,
+        village,
+        district,
+        state,
+      },
+      { onConflict: "id" },
+    );
 
     if (error) {
-      setSaveMessage('Failed to save profile. Please try again.');
+      setSaveMessage("Failed to save profile. Please try again.");
     } else {
-      setSaveMessage('Profile saved successfully!');
+      setSaveMessage("Profile saved successfully!");
       // Refresh profile data
       await loadProfile();
     }
     setSaving(false);
-    setTimeout(() => setSaveMessage(''), 3000);
+    setTimeout(() => setSaveMessage(""), 3000);
   };
 
   const handleSendOtp = async () => {
     if (!otpPhone.trim()) {
-      setOtpError('Please enter a valid phone number');
+      setOtpError("Please enter a valid phone number");
       return;
     }
     setOtpLoading(true);
-    setOtpError('');
-    setOtpMessage('');
-    setDevOtp('');
+    setOtpError("");
+    setOtpMessage("");
+    setDevOtp("");
 
     try {
-      const res = await fetch('/api/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: otpPhone }),
       });
       const data = await res.json();
 
       if (data.success) {
-        setOtpStep('verify');
-        setOtpMessage('OTP sent! Check your phone.');
+        setOtpStep("verify");
+        setOtpMessage("OTP sent! Check your phone.");
         // In dev mode, the OTP is returned in the response
         if (data.otp_dev) {
           setDevOtp(data.otp_dev);
         }
       } else {
-        setOtpError(data.message || 'Failed to send OTP');
+        setOtpError(data.message || "Failed to send OTP");
       }
     } catch {
-      setOtpError('Network error. Please try again.');
+      setOtpError("Network error. Please try again.");
     }
     setOtpLoading(false);
   };
 
   const handleVerifyOtp = async () => {
     if (otpValue.length !== 6) {
-      setOtpError('Please enter the complete 6-digit OTP');
+      setOtpError("Please enter the complete 6-digit OTP");
       return;
     }
     setOtpLoading(true);
-    setOtpError('');
-    setOtpMessage('');
+    setOtpError("");
+    setOtpMessage("");
 
     try {
-      const res = await fetch('/api/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ otp: otpValue }),
       });
       const data = await res.json();
 
       if (data.success) {
-        setOtpMessage('Phone verified successfully! 🎉');
+        setOtpMessage("Phone verified successfully! 🎉");
         setOtpDialogOpen(false);
         // Refresh profile
         await loadProfile();
       } else {
-        setOtpError(data.message || 'Verification failed');
+        setOtpError(data.message || "Verification failed");
       }
     } catch {
-      setOtpError('Network error. Please try again.');
+      setOtpError("Network error. Please try again.");
     }
     setOtpLoading(false);
   };
 
   const openOtpDialog = () => {
-    setOtpStep('phone');
-    setOtpPhone(phone || '');
-    setOtpValue('');
-    setOtpMessage('');
-    setOtpError('');
-    setDevOtp('');
+    setOtpStep("phone");
+    setOtpPhone(phone || "");
+    setOtpValue("");
+    setOtpMessage("");
+    setOtpError("");
+    setDevOtp("");
     setOtpDialogOpen(true);
   };
 
@@ -225,20 +229,39 @@ export default function ProfilePage() {
   const total = completed + failed;
   const role = profile?.role
     ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1)
-    : 'Farmer';
+    : "Farmer";
   const phoneVerified = profile?.phone_verified === true;
   const registeredSince = userCreatedAt
-    ? new Date(userCreatedAt).toLocaleDateString('en-IN', {
-        month: 'long',
-        year: 'numeric',
+    ? new Date(userCreatedAt).toLocaleDateString("en-IN", {
+        month: "long",
+        year: "numeric",
       })
-    : '—';
+    : "—";
 
   function memberTier(s: number) {
-    if (s >= 80) return { label: 'Gold', color: 'text-yellow-500', bg: 'bg-yellow-500/10 border-yellow-500/30' };
-    if (s >= 60) return { label: 'Silver', color: 'text-gray-400', bg: 'bg-gray-400/10 border-gray-400/30' };
-    if (s >= 40) return { label: 'Bronze', color: 'text-orange-500', bg: 'bg-orange-500/10 border-orange-500/30' };
-    return { label: 'New', color: 'text-muted-foreground', bg: 'bg-muted/30 border-border' };
+    if (s >= 80)
+      return {
+        label: "Gold",
+        color: "text-yellow-500",
+        bg: "bg-yellow-500/10 border-yellow-500/30",
+      };
+    if (s >= 60)
+      return {
+        label: "Silver",
+        color: "text-gray-400",
+        bg: "bg-gray-400/10 border-gray-400/30",
+      };
+    if (s >= 40)
+      return {
+        label: "Bronze",
+        color: "text-orange-500",
+        bg: "bg-orange-500/10 border-orange-500/30",
+      };
+    return {
+      label: "New",
+      color: "text-muted-foreground",
+      bg: "bg-muted/30 border-border",
+    };
   }
 
   const tier = memberTier(score);
@@ -247,9 +270,23 @@ export default function ProfilePage() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center py-32 text-muted-foreground gap-3">
-          <svg className="animate-spin h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+          <svg
+            className="animate-spin h-6 w-6 text-primary"
+            viewBox="0 0 24 24"
+            fill="none">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v8z"
+            />
           </svg>
           Loading profile...
         </div>
@@ -262,7 +299,9 @@ export default function ProfilePage() {
       <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-4xl w-full overflow-x-hidden">
         {/* Page Header */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">My Profile</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+            My Profile
+          </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-2">
             Manage your personal information and verification status
           </p>
@@ -283,8 +322,12 @@ export default function ProfilePage() {
               </div>
               <div className="pb-2 flex-1 text-center sm:text-left">
                 <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-start">
-                  <h2 className="text-xl sm:text-2xl font-bold text-foreground">{fullName || 'Your Name'}</h2>
-                  <Badge className={`${tier.bg} ${tier.color} border text-xs`}>{tier.label} Member</Badge>
+                  <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+                    {fullName || "Your Name"}
+                  </h2>
+                  <Badge className={`${tier.bg} ${tier.color} border text-xs`}>
+                    {tier.label} Member
+                  </Badge>
                   {phoneVerified && (
                     <Badge className="bg-green-500/10 text-green-600 border border-green-500/30 text-xs">
                       ✓ Verified
@@ -305,50 +348,70 @@ export default function ProfilePage() {
             {/* Quick Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 sm:p-4 text-center">
-                <p className="text-2xl sm:text-3xl font-bold text-primary">{scoreOut5}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Trust Score</p>
+                <p className="text-2xl sm:text-3xl font-bold text-primary">
+                  {scoreOut5}
+                </p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                  Trust Score
+                </p>
               </div>
               <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 sm:p-4 text-center">
-                <p className="text-2xl sm:text-3xl font-bold text-foreground">{total}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Transactions</p>
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">
+                  {total}
+                </p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                  Transactions
+                </p>
               </div>
               <div className="bg-green-500/5 border border-green-500/10 rounded-xl p-3 sm:p-4 text-center">
-                <p className="text-2xl sm:text-3xl font-bold text-green-600">{completed}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Completed</p>
+                <p className="text-2xl sm:text-3xl font-bold text-green-600">
+                  {completed}
+                </p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                  Completed
+                </p>
               </div>
               <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3 sm:p-4 text-center">
-                <p className="text-2xl sm:text-3xl font-bold text-red-500">{failed}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Failed</p>
+                <p className="text-2xl sm:text-3xl font-bold text-red-500">
+                  {failed}
+                </p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                  Failed
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Verification Status Card */}
-        <Card className={`border-2 transition-all ${phoneVerified ? 'border-green-500/30 bg-green-500/[0.02]' : 'border-orange-500/30 bg-orange-500/[0.02]'}`}>
+        <Card
+          className={`border-2 transition-all ${phoneVerified ? "border-green-500/30 bg-green-500/[0.02]" : "border-orange-500/30 bg-orange-500/[0.02]"}`}>
           <CardHeader>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   {phoneVerified ? (
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-500/10 text-green-600 text-lg">✓</span>
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-500/10 text-green-600 text-lg">
+                      ✓
+                    </span>
                   ) : (
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/10 text-orange-600 text-lg">!</span>
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/10 text-orange-600 text-lg">
+                      !
+                    </span>
                   )}
                   Identity Verification
                 </CardTitle>
                 <CardDescription className="mt-1 text-xs sm:text-sm">
                   {phoneVerified
-                    ? 'Your phone number has been verified. Your profile is trusted.'
-                    : 'Verify your phone number via OTP to increase trust and unlock all features.'}
+                    ? "Your phone number has been verified. Your profile is trusted."
+                    : "Verify your phone number via OTP to increase trust and unlock all features."}
                 </CardDescription>
               </div>
               {!phoneVerified && (
                 <Button
                   onClick={openOtpDialog}
                   className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 w-full sm:w-auto"
-                  id="verify-phone-btn"
-                >
+                  id="verify-phone-btn">
                   Verify Now
                 </Button>
               )}
@@ -360,48 +423,69 @@ export default function ProfilePage() {
                 <span className="text-xl sm:text-2xl">📧</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Email</p>
-                  <p className="text-xs sm:text-sm font-medium text-foreground truncate">{userEmail}</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground truncate">
+                    {userEmail}
+                  </p>
                 </div>
-                <Badge className="bg-green-500/10 text-green-600 border border-green-500/30 text-[10px]">Verified</Badge>
+                <Badge className="bg-green-500/10 text-green-600 border border-green-500/30 text-[10px]">
+                  Verified
+                </Badge>
               </div>
               <div className="flex items-center gap-2 sm:gap-3 p-3 bg-background rounded-lg border border-border">
                 <span className="text-xl sm:text-2xl">📱</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Phone</p>
-                  <p className="text-xs sm:text-sm font-medium text-foreground">{profile?.phone || 'Not set'}</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground">
+                    {profile?.phone || "Not set"}
+                  </p>
                 </div>
                 {phoneVerified ? (
-                  <Badge className="bg-green-500/10 text-green-600 border border-green-500/30 text-[10px]">Verified</Badge>
+                  <Badge className="bg-green-500/10 text-green-600 border border-green-500/30 text-[10px]">
+                    Verified
+                  </Badge>
                 ) : (
-                  <Badge className="bg-orange-500/10 text-orange-600 border border-orange-500/30 text-[10px]">Pending</Badge>
+                  <Badge className="bg-orange-500/10 text-orange-600 border border-orange-500/30 text-[10px]">
+                    Pending
+                  </Badge>
                 )}
               </div>
               <div className="flex items-center gap-2 sm:gap-3 p-3 bg-background rounded-lg border border-border">
                 <span className="text-xl sm:text-2xl">🆔</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">KYC</p>
-                  <p className="text-xs sm:text-sm font-medium text-foreground">Coming Soon</p>
+                  <p className="text-xs sm:text-sm font-medium text-foreground">
+                    Coming Soon
+                  </p>
                 </div>
-                <Badge className="bg-muted text-muted-foreground border border-border text-[10px]">N/A</Badge>
+                <Badge className="bg-muted text-muted-foreground border border-border text-[10px]">
+                  N/A
+                </Badge>
               </div>
             </div>
 
             {/* Verification Progress */}
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-foreground">Verification Progress</span>
-                <span className="text-sm text-muted-foreground">{phoneVerified ? '2' : '1'}/3 steps</span>
+                <span className="text-sm font-medium text-foreground">
+                  Verification Progress
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {phoneVerified ? "2" : "1"}/3 steps
+                </span>
               </div>
               <div className="w-full bg-muted rounded-full h-2.5">
                 <div
                   className="bg-gradient-to-r from-primary to-accent rounded-full h-2.5 transition-all duration-500"
-                  style={{ width: phoneVerified ? '66%' : '33%' }}
+                  style={{ width: phoneVerified ? "66%" : "33%" }}
                 />
               </div>
               <div className="flex justify-between mt-2 text-[10px] text-muted-foreground">
                 <span className="text-green-600 font-semibold">Email ✓</span>
-                <span className={phoneVerified ? 'text-green-600 font-semibold' : ''}>
-                  Phone {phoneVerified ? '✓' : '○'}
+                <span
+                  className={
+                    phoneVerified ? "text-green-600 font-semibold" : ""
+                  }>
+                  Phone {phoneVerified ? "✓" : "○"}
                 </span>
                 <span>KYC ○</span>
               </div>
@@ -418,7 +502,11 @@ export default function ProfilePage() {
           <CardContent className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <label className="text-sm font-semibold text-foreground" htmlFor="profile-fullname">Full Name</label>
+                <label
+                  className="text-sm font-semibold text-foreground"
+                  htmlFor="profile-fullname">
+                  Full Name
+                </label>
                 <Input
                   id="profile-fullname"
                   value={fullName}
@@ -428,17 +516,27 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-foreground" htmlFor="profile-email">Email</label>
+                <label
+                  className="text-sm font-semibold text-foreground"
+                  htmlFor="profile-email">
+                  Email
+                </label>
                 <Input
                   id="profile-email"
                   value={userEmail}
                   disabled
                   className="mt-2 opacity-60"
                 />
-                <p className="text-[10px] text-muted-foreground mt-1">Email cannot be changed</p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Email cannot be changed
+                </p>
               </div>
               <div>
-                <label className="text-sm font-semibold text-foreground" htmlFor="profile-phone">Phone Number</label>
+                <label
+                  className="text-sm font-semibold text-foreground"
+                  htmlFor="profile-phone">
+                  Phone Number
+                </label>
                 <div className="flex gap-2 mt-2">
                   <Input
                     id="profile-phone"
@@ -452,31 +550,42 @@ export default function ProfilePage() {
                     size="sm"
                     onClick={openOtpDialog}
                     className="whitespace-nowrap"
-                    id="change-phone-btn"
-                  >
-                    {phoneVerified ? 'Change' : 'Verify'}
+                    id="change-phone-btn">
+                    {phoneVerified ? "Change" : "Verify"}
                   </Button>
                 </div>
               </div>
               <div>
-                <label className="text-sm font-semibold text-foreground" htmlFor="profile-role">Role</label>
+                <label
+                  className="text-sm font-semibold text-foreground"
+                  htmlFor="profile-role">
+                  Role
+                </label>
                 <Input
                   id="profile-role"
                   value={role}
                   disabled
                   className="mt-2 opacity-60"
                 />
-                <p className="text-[10px] text-muted-foreground mt-1">Role is set during registration</p>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Role is set during registration
+                </p>
               </div>
             </div>
 
             <Separator />
 
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-4">📍 Location Details</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-4">
+                📍 Location Details
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <div>
-                  <label className="text-sm text-muted-foreground" htmlFor="profile-village">Village / Town</label>
+                  <label
+                    className="text-sm text-muted-foreground"
+                    htmlFor="profile-village">
+                    Village / Town
+                  </label>
                   <Input
                     id="profile-village"
                     value={village}
@@ -486,7 +595,11 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground" htmlFor="profile-district">District</label>
+                  <label
+                    className="text-sm text-muted-foreground"
+                    htmlFor="profile-district">
+                    District
+                  </label>
                   <Input
                     id="profile-district"
                     value={district}
@@ -496,7 +609,11 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground" htmlFor="profile-state">State</label>
+                  <label
+                    className="text-sm text-muted-foreground"
+                    htmlFor="profile-state">
+                    State
+                  </label>
                   <Input
                     id="profile-state"
                     value={state}
@@ -513,22 +630,36 @@ export default function ProfilePage() {
                 onClick={handleSaveProfile}
                 disabled={saving}
                 className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md hover:shadow-lg transition-all"
-                id="save-profile-btn"
-              >
+                id="save-profile-btn">
                 {saving ? (
                   <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      />
                     </svg>
                     Saving...
                   </span>
                 ) : (
-                  'Save Changes'
+                  "Save Changes"
                 )}
               </Button>
               {saveMessage && (
-                <p className={`text-sm font-medium animate-in fade-in ${saveMessage.includes('success') ? 'text-green-600' : 'text-destructive'}`}>
+                <p
+                  className={`text-sm font-medium animate-in fade-in ${saveMessage.includes("success") ? "text-green-600" : "text-destructive"}`}>
                   {saveMessage}
                 </p>
               )}
@@ -545,16 +676,18 @@ export default function ProfilePage() {
               📱 Phone Verification
             </DialogTitle>
             <DialogDescription>
-              {otpStep === 'phone'
-                ? 'Enter your phone number to receive a verification code.'
-                : 'Enter the 6-digit OTP sent to your phone.'}
+              {otpStep === "phone"
+                ? "Enter your phone number to receive a verification code."
+                : "Enter the 6-digit OTP sent to your phone."}
             </DialogDescription>
           </DialogHeader>
 
-          {otpStep === 'phone' ? (
+          {otpStep === "phone" ? (
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-foreground" htmlFor="otp-phone-input">
+                <label
+                  className="text-sm font-medium text-foreground"
+                  htmlFor="otp-phone-input">
                   Phone Number
                 </label>
                 <Input
@@ -567,21 +700,25 @@ export default function ProfilePage() {
                 />
               </div>
               {otpError && (
-                <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">{otpError}</p>
+                <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
+                  {otpError}
+                </p>
               )}
             </div>
           ) : (
             <div className="space-y-4">
               <div className="flex flex-col items-center gap-4">
                 <p className="text-sm text-muted-foreground text-center">
-                  Code sent to <span className="font-semibold text-foreground">{otpPhone}</span>
+                  Code sent to{" "}
+                  <span className="font-semibold text-foreground">
+                    {otpPhone}
+                  </span>
                 </p>
                 <InputOTP
                   maxLength={6}
                   value={otpValue}
                   onChange={(value) => setOtpValue(value)}
-                  id="otp-input"
-                >
+                  id="otp-input">
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />
@@ -598,52 +735,72 @@ export default function ProfilePage() {
                 {/* Dev mode OTP display */}
                 {devOtp && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center w-full">
-                    <p className="text-[10px] text-amber-600 font-medium">DEV MODE — OTP:</p>
-                    <p className="text-2xl font-bold text-amber-700 tracking-[0.5em] font-mono">{devOtp}</p>
+                    <p className="text-[10px] text-amber-600 font-medium">
+                      DEV MODE — OTP:
+                    </p>
+                    <p className="text-2xl font-bold text-amber-700 tracking-[0.5em] font-mono">
+                      {devOtp}
+                    </p>
                   </div>
                 )}
               </div>
 
               {otpMessage && (
-                <p className="text-sm text-green-600 bg-green-50 p-3 rounded-lg text-center">{otpMessage}</p>
+                <p className="text-sm text-green-600 bg-green-50 p-3 rounded-lg text-center">
+                  {otpMessage}
+                </p>
               )}
               {otpError && (
-                <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg text-center">{otpError}</p>
+                <p className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg text-center">
+                  {otpError}
+                </p>
               )}
 
               <button
                 onClick={() => {
-                  setOtpStep('phone');
-                  setOtpValue('');
-                  setOtpError('');
-                  setOtpMessage('');
-                  setDevOtp('');
+                  setOtpStep("phone");
+                  setOtpValue("");
+                  setOtpError("");
+                  setOtpMessage("");
+                  setDevOtp("");
                 }}
-                className="text-sm text-primary hover:underline mx-auto block"
-              >
+                className="text-sm text-primary hover:underline mx-auto block">
                 ← Change phone number
               </button>
             </div>
           )}
 
           <DialogFooter>
-            {otpStep === 'phone' ? (
+            {otpStep === "phone" ? (
               <Button
                 onClick={handleSendOtp}
                 disabled={otpLoading}
                 className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground"
-                id="send-otp-btn"
-              >
+                id="send-otp-btn">
                 {otpLoading ? (
                   <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      />
                     </svg>
                     Sending...
                   </span>
                 ) : (
-                  'Send OTP'
+                  "Send OTP"
                 )}
               </Button>
             ) : (
@@ -651,18 +808,31 @@ export default function ProfilePage() {
                 onClick={handleVerifyOtp}
                 disabled={otpLoading || otpValue.length !== 6}
                 className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground"
-                id="verify-otp-btn"
-              >
+                id="verify-otp-btn">
                 {otpLoading ? (
                   <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      />
                     </svg>
                     Verifying...
                   </span>
                 ) : (
-                  'Verify OTP'
+                  "Verify OTP"
                 )}
               </Button>
             )}

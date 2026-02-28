@@ -98,8 +98,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       <button
         className="relative p-2.5 rounded-xl hover:bg-green-50 transition-all duration-200 hover:shadow-sm"
         title="Notifications"
-        onClick={() => setOpen((prev) => !prev)}
-      >
+        onClick={() => setOpen((prev) => !prev)}>
         <span className="text-xl">🔔</span>
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-red-400 text-white text-[10px] font-bold px-1 shadow-sm shadow-red-500/30 animate-pulse">
@@ -120,8 +119,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-green-600 hover:text-green-700 hover:underline transition-colors whitespace-nowrap ml-4"
-                >
+                  className="text-xs text-green-600 hover:text-green-700 hover:underline transition-colors whitespace-nowrap ml-4">
                   Mark all read
                 </button>
               )}
@@ -139,12 +137,13 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                     <div
                       key={n.id}
                       className={`flex-shrink-0 w-72 p-4 rounded-xl border transition-colors duration-200 ${
-                        !n.is_read 
-                          ? "bg-green-50 border-green-200" 
+                        !n.is_read
+                          ? "bg-green-50 border-green-200"
                           : "bg-white border-green-100 hover:bg-green-50/50"
-                      }`}
-                    >
-                      <p className="text-sm text-green-900 break-words whitespace-normal line-clamp-3">{n.message}</p>
+                      }`}>
+                      <p className="text-sm text-green-900 break-words whitespace-normal line-clamp-3">
+                        {n.message}
+                      </p>
                       <p className="text-xs text-green-600/60 mt-2 whitespace-nowrap">
                         {timeAgo(n.created_at)}
                       </p>
@@ -165,8 +164,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-green-600 hover:text-green-700 hover:underline transition-colors whitespace-nowrap ml-4"
-                >
+                  className="text-xs text-green-600 hover:text-green-700 hover:underline transition-colors whitespace-nowrap ml-4">
                   Mark all read
                 </button>
               )}
@@ -184,12 +182,13 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                     <div
                       key={n.id}
                       className={`flex-shrink-0 w-72 p-4 rounded-xl border transition-colors duration-200 ${
-                        !n.is_read 
-                          ? "bg-green-50 border-green-200" 
+                        !n.is_read
+                          ? "bg-green-50 border-green-200"
                           : "bg-white border-green-100 hover:bg-green-50/50"
-                      }`}
-                    >
-                      <p className="text-sm text-green-900 break-words whitespace-normal line-clamp-3">{n.message}</p>
+                      }`}>
+                      <p className="text-sm text-green-900 break-words whitespace-normal line-clamp-3">
+                        {n.message}
+                      </p>
                       <p className="text-xs text-green-600/60 mt-2 whitespace-nowrap">
                         {timeAgo(n.created_at)}
                       </p>

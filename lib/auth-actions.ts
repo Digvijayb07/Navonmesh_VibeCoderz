@@ -12,6 +12,8 @@ export async function login(formData: FormData) {
     password: formData.get("password") as string,
   };
 
+  const redirectTo = formData.get("redirectTo") as string | null;
+
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
@@ -19,21 +21,23 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+
+  // Redirect to the original page or home
+  redirect(redirectTo && redirectTo !== "/login" ? redirectTo : "/");
 }
 
 export async function signup(formData: FormData) {
   const supabase = await createClient();
 
   const firstName = formData.get("first-name") as string;
-  const lastName  = formData.get("last-name") as string;
-  const email     = formData.get("email") as string;
-  const password  = formData.get("password") as string;
-  const role      = (formData.get("role") as string) || "farmer";
-  const phone     = (formData.get("phone") as string) || null;
-  const village   = (formData.get("village") as string) || null;
-  const district  = (formData.get("district") as string) || null;
-  const state     = (formData.get("state") as string) || null;
+  const lastName = formData.get("last-name") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const role = (formData.get("role") as string) || "farmer";
+  const phone = (formData.get("phone") as string) || null;
+  const village = (formData.get("village") as string) || null;
+  const district = (formData.get("district") as string) || null;
+  const state = (formData.get("state") as string) || null;
 
   const full_name = `${firstName} ${lastName}`.trim();
 
@@ -68,7 +72,7 @@ export async function signup(formData: FormData) {
         district,
         state,
       },
-      { onConflict: "id" }
+      { onConflict: "id" },
     );
 
     if (profileError) {
@@ -80,7 +84,7 @@ export async function signup(formData: FormData) {
   revalidatePath("/", "layout");
   redirect(
     "/login?message=" +
-      encodeURIComponent("Check your email to confirm your account")
+      encodeURIComponent("Check your email to confirm your account"),
   );
 }
 

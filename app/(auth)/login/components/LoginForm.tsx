@@ -29,7 +29,8 @@ export function LoginForm({
 
   const error = searchParams.get("error");
   const message = searchParams.get("message");
-  const next = searchParams.get("next") || "/";
+  const redirectedFrom = searchParams.get("redirectedFrom");
+  const next = redirectedFrom || searchParams.get("next") || "/";
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,7 +50,7 @@ export function LoginForm({
         return;
       }
 
-      // After successful login, redirect to the next page or home
+      // After successful login, redirect to the original page or home
       router.push(next);
     } catch (err) {
       router.push("/login?error=An unexpected error occurred");
@@ -63,8 +64,7 @@ export function LoginForm({
         "glass-card shadow-xl shadow-green-900/10 w-full mx-auto border-0 rounded-2xl",
         className,
       )}
-      {...props}
-    >
+      {...props}>
       <CardContent className="p-8">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex flex-col items-center gap-3 text-center mb-6">
@@ -77,8 +77,7 @@ export function LoginForm({
                 stroke="white"
                 strokeWidth="2.5"
                 strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+                strokeLinejoin="round">
                 <path d="M12 2L2 7l10 5 10-5-10-5z" />
                 <path d="M2 17l10 5 10-5" />
                 <path d="M2 12l10 5 10-5" />
@@ -86,8 +85,7 @@ export function LoginForm({
             </div>
             <h1
               className="text-2xl font-bold gradient-text"
-              style={{ fontFamily: "var(--font-poppins)" }}
-            >
+              style={{ fontFamily: "var(--font-poppins)" }}>
               Welcome back
             </h1>
             <p className="text-green-700/50 text-sm">
@@ -129,8 +127,7 @@ export function LoginForm({
                 <FieldLabel htmlFor="password">Password</FieldLabel>
                 <a
                   href="#"
-                  className="text-sm text-muted-foreground hover:underline"
-                >
+                  className="text-sm text-muted-foreground hover:underline">
                   Forgot password?
                 </a>
               </div>
@@ -150,8 +147,7 @@ export function LoginForm({
             <Button
               type="submit"
               className="w-full btn-gradient text-white border-0 shadow-lg shadow-green-500/20 hover:shadow-green-500/40"
-              disabled={loading}
-            >
+              disabled={loading}>
               {loading ? "Loading..." : "Login"}
             </Button>
           </div>

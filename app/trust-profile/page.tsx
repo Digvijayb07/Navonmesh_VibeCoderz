@@ -146,8 +146,7 @@ export default function TrustProfilePage() {
           <svg
             className="animate-spin h-6 w-6 text-primary"
             viewBox="0 0 24 24"
-            fill="none"
-          >
+            fill="none">
             <circle
               className="opacity-25"
               cx="12"
@@ -173,7 +172,9 @@ export default function TrustProfilePage() {
       <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 w-full max-w-full overflow-x-hidden">
         {/* Header */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Trust Profile</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+            Trust Profile
+          </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-2">
             Your reputation and trust metrics in the Krishi Exchange community
           </p>
@@ -241,8 +242,7 @@ export default function TrustProfilePage() {
                       Member Status
                     </p>
                     <p
-                      className={`text-2xl sm:text-3xl font-bold ${memberStatusColor(status)}`}
-                    >
+                      className={`text-2xl sm:text-3xl font-bold ${memberStatusColor(status)}`}>
                       {status}
                     </p>
                   </div>
@@ -319,8 +319,7 @@ export default function TrustProfilePage() {
                     Member Tier
                   </span>
                   <span
-                    className={`text-2xl font-bold ${memberStatusColor(status)}`}
-                  >
+                    className={`text-2xl font-bold ${memberStatusColor(status)}`}>
                     {status}
                   </span>
                 </div>
@@ -361,8 +360,7 @@ export default function TrustProfilePage() {
                     badge.earned
                       ? badge.color
                       : "bg-muted/30 text-muted-foreground border-border opacity-50"
-                  }`}
-                >
+                  }`}>
                   <div className="text-2xl mb-2">{badge.icon}</div>
                   <p className="text-sm font-semibold">{badge.label}</p>
                   {!badge.earned && (
