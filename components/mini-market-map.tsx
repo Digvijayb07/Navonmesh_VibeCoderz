@@ -175,7 +175,7 @@ export default function MiniMarketMap({
                   className="mt-2 text-xs text-green-600 underline font-medium"
                   onClick={() => onMarkerClick?.(listing)}
                 >
-                  Buy Now →
+                  Exchange →
                 </button>
               </div>
             </Popup>

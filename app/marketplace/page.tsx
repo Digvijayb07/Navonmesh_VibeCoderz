@@ -1019,7 +1019,7 @@ export default function MarketplacePage() {
                     <Button
                       className="flex-1 bg-primary hover:bg-primary/90"
                       onClick={() => openBuyModal(listing)}>
-                      {listing.listing_type === "tool" ? "Exchange" : "Buy Now"}
+                      Exchange
                     </Button>
                     <Button
                       variant="outline"
@@ -1474,7 +1474,7 @@ export default function MarketplacePage() {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          BUY NOW MODAL
+          EXCHANGE MODAL
       ══════════════════════════════════════════════════════════════════════ */}
       {showBuyModal && selectedListing && (
         <div
@@ -1486,13 +1486,10 @@ export default function MarketplacePage() {
             <div className="flex items-center justify-between px-6 py-5 border-b border-border">
               <div>
                 <h2 className="text-xl font-bold text-foreground">
-                  {selectedListing.listing_type === "tool"
-                    ? "Place Exchange Request"
-                    : "Place Buy Request"}
+                  Place Exchange Request
                 </h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Submit a request to the{" "}
-                  {selectedListing.listing_type === "tool" ? "owner" : "farmer"}
+                  Submit a request to the seller
                 </p>
               </div>
               <button
