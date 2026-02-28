@@ -76,7 +76,7 @@ export function TopNav({ onMenuClick }: TopNavProps) {
         </button>
 
         {/* Search Bar */}
-        <div className="flex-1 max-w-lg relative hidden sm:block">
+        {/* <div className="flex-1 max-w-lg relative hidden sm:block">
           <svg
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-green-500/50 z-10"
             width="20"
@@ -97,10 +97,10 @@ export function TopNav({ onMenuClick }: TopNavProps) {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-11 pr-4 py-3 rounded-xl nav-search-input text-sm text-green-900 placeholder:text-green-500/40 focus:outline-none transition-all"
           />
-        </div>
+        </div> */}
 
         {/* Right Section */}
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+        <div className="flex items-end gap-2 sm:gap-4 shrink-0">
           {/* Notifications */}
           <NotificationBell userId={user?.id ?? null} />
           <div className="hidden sm:flex items-center gap-3">
