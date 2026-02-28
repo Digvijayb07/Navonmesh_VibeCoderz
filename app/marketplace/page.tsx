@@ -48,6 +48,17 @@ interface ListingWithDistance extends ProduceListing {
   _distance?: number;
 }
 
+interface SellerDetails {
+  full_name: string | null;
+  phone: string | null;
+  village: string | null;
+  district: string | null;
+  state: string | null;
+  trust_score: number | null;
+  total_completed: number | null;
+  role: string | null;
+}
+
 interface ListingForm {
   listingType: "crop" | "tool";
   cropName: string;
@@ -249,6 +260,47 @@ export default function MarketplacePage() {
   const [showManualAddress, setShowManualAddress] = useState(false);
   const [manualAddress, setManualAddress] = useState("");
   const [radiusFilter, setRadiusFilter] = useState(0); // 0 = all
+
+  // Contact seller modal
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [sellerDetails, setSellerDetails] = useState<SellerDetails | null>(
+    null,
+  );
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactError, setContactError] = useState<string | null>(null);
+
+  // ── Fetch seller details ────────────────────────────────────────────────────
+  const fetchSellerDetails = async (farmerId: string) => {
+    setContactLoading(true);
+    setContactError(null);
+    setShowContactModal(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(
+          "full_name, phone, village, district, state, trust_score, total_completed, role",
+        )
+        .eq("id", farmerId)
+        .single();
+
+      if (error) {
+        setContactError(error.message);
+      } else {
+        setSellerDetails(data as SellerDetails);
+      }
+    } catch (err) {
+      setContactError("Failed to load seller details");
+    } finally {
+      setContactLoading(false);
+    }
+  };
+
+  const closeContactModal = () => {
+    setShowContactModal(false);
+    setSellerDetails(null);
+    setContactError(null);
+  };
 
   // ── Fetch listings ──────────────────────────────────────────────────────────
   const fetchListings = useCallback(async () => {
@@ -969,7 +1021,10 @@ export default function MarketplacePage() {
                       onClick={() => openBuyModal(listing)}>
                       {listing.listing_type === "tool" ? "Exchange" : "Buy Now"}
                     </Button>
-                    <Button variant="outline" className="flex-1">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => fetchSellerDetails(listing.farmer_id)}>
                       Contact
                     </Button>
                   </div>
@@ -1729,6 +1784,175 @@ export default function MarketplacePage() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          CONTACT SELLER MODAL
+      ══════════════════════════════════════════════════════════════════════ */}
+      {showContactModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeContactModal();
+          }}>
+          <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-border bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
+              <div>
+                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                  <span className="text-2xl">👤</span>
+                  Seller Contact Info
+                </h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Get in touch with the seller
+                </p>
+              </div>
+              <button
+                onClick={closeContactModal}
+                className="w-8 h-8 rounded-full hover:bg-background/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors text-lg">
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6">
+              {contactLoading && (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-sm text-muted-foreground">
+                    Loading seller details...
+                  </p>
+                </div>
+              )}
+
+              {contactError && (
+                <div className="bg-destructive/10 text-destructive text-sm p-4 rounded-lg mb-4 flex items-start gap-2">
+                  <span className="text-lg">⚠️</span>
+                  <span>{contactError}</span>
+                </div>
+              )}
+
+              {sellerDetails && !contactLoading && (
+                <div className="space-y-4">
+                  {/* Name */}
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-secondary/30 border border-border">
+                    <span className="text-2xl">👤</span>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Full Name
+                      </p>
+                      <p className="text-base font-semibold text-foreground">
+                        {sellerDetails.full_name || "Not provided"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+                    <span className="text-2xl">📱</span>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Phone Number
+                      </p>
+                      <p className="text-lg font-bold text-green-700 dark:text-green-400">
+                        {sellerDetails.phone || "Not provided"}
+                      </p>
+                      {sellerDetails.phone && (
+                        <a
+                          href={`tel:${sellerDetails.phone}`}
+                          className="text-xs text-primary hover:underline mt-1 inline-block">
+                          Tap to call
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Location */}
+                  {(sellerDetails.village ||
+                    sellerDetails.district ||
+                    sellerDetails.state) && (
+                    <div className="flex items-start gap-3 p-4 rounded-xl bg-secondary/30 border border-border">
+                      <span className="text-2xl">📍</span>
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground mb-1">
+                          Location
+                        </p>
+                        <p className="text-sm text-foreground">
+                          {[
+                            sellerDetails.village,
+                            sellerDetails.district,
+                            sellerDetails.state,
+                          ]
+                            .filter(Boolean)
+                            .join(", ") || "Not provided"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Role */}
+                  {sellerDetails.role && (
+                    <div className="flex items-start gap-3 p-4 rounded-xl bg-secondary/30 border border-border">
+                      <span className="text-2xl">💼</span>
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground mb-1">
+                          Role
+                        </p>
+                        <p className="text-sm text-foreground capitalize">
+                          {sellerDetails.role}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Trust Score */}
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">⭐</span>
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Trust Score
+                        </p>
+                        <p className="text-lg font-bold text-amber-700 dark:text-amber-400">
+                          {((sellerDetails.trust_score ?? 50) / 20).toFixed(1)}
+                          /5
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">Completed</p>
+                      <p className="text-base font-semibold text-foreground">
+                        {sellerDetails.total_completed ?? 0} trades
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-2">
+                    {sellerDetails.phone && (
+                      <>
+                        <a
+                          href={`tel:${sellerDetails.phone}`}
+                          className="flex-1 px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-center transition-colors">
+                          📞 Call Now
+                        </a>
+                        <a
+                          href={`sms:${sellerDetails.phone}`}
+                          className="flex-1 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-center transition-colors">
+                          💬 Send SMS
+                        </a>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {!sellerDetails && !contactLoading && !contactError && (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  No seller details available
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
