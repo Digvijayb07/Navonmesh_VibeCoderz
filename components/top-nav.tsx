@@ -54,7 +54,7 @@ export function TopNav({ onMenuClick }: TopNavProps) {
 
   return (
     <header className="glass-nav sticky top-0 z-40 shadow-sm shadow-green-900/5">
-      <div className="h-[68px] px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 sm:gap-5 w-full">
+      <div className="h-[68px] px-4 sm:px-6 lg:px-8 flex items-center justify-end gap-3 sm:gap-5 w-full">
         {/* Hamburger Menu Button */}
         <button
           onClick={onMenuClick}
@@ -75,30 +75,6 @@ export function TopNav({ onMenuClick }: TopNavProps) {
           </svg>
         </button>
 
-        {/* Search Bar */}
-        <div className="flex-1 max-w-lg relative hidden sm:block">
-          <svg
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-green-500/50 z-10"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="search"
-            placeholder="Search crops, prices, buyers..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 rounded-xl nav-search-input text-sm text-green-900 placeholder:text-green-500/40 focus:outline-none transition-all"
-          />
-        </div>
-
         {/* Right Section */}
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {/* Notifications */}
@@ -106,12 +82,6 @@ export function TopNav({ onMenuClick }: TopNavProps) {
           <div className="hidden sm:flex items-center gap-3">
             <HindiToggle />
           </div>
-          {/* Messages */}
-          <button
-            className="p-2.5 rounded-xl hover:bg-green-50 transition-all duration-200 hover:shadow-sm hidden sm:block"
-            title="Messages">
-            <span className="text-xl">💬</span>
-          </button>
 
           {/* User Menu */}
           <div className="relative">
