@@ -76,20 +76,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-lg shadow-green-500/20">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
+          <div className="w-10 h-10 sm:w-11 sm:h-11 flex-shrink-0">
+            <img
+              src="/logo.png"
+              alt="Krishi Exchange logo"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
             <h1
