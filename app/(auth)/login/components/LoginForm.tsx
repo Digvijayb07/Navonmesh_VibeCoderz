@@ -68,20 +68,8 @@ export function LoginForm({
       <CardContent className="p-8">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex flex-col items-center gap-3 text-center mb-6">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-lg shadow-green-500/20 mb-1">
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
+            <div className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20 mb-1">
+              <img src="./logo.png" alt="" />
             </div>
             <h1
               className="text-2xl font-bold gradient-text"
