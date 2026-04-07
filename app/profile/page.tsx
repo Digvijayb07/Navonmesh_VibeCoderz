@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AppLayout } from "@/components/app-layout";
 import {
   Card,
@@ -55,6 +55,14 @@ export default function ProfilePage() {
   const [avatarLetter, setAvatarLetter] = useState("U");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // Camera capture state
+  const [cameraDialogOpen, setCameraDialogOpen] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState("");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Editable fields
   const [fullName, setFullName] = useState("");
@@ -216,46 +224,131 @@ export default function ProfilePage() {
     setOtpLoading(false);
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  try {
-    setUploadingPhoto(true);
+  // ── Camera capture functions ──
+  const openCamera = async () => {
+    setCapturedImage(null);
+    setCameraError("");
+    setCameraDialogOpen(true);
 
-    if (!e.target.files || e.target.files.length === 0) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false,
+      });
+      setCameraStream(stream);
+      // Attach stream to video element after a tick so the ref is mounted
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err: any) {
+      console.error("Camera access error:", err);
+      setCameraError(
+        err.name === "NotAllowedError"
+          ? "Camera permission denied. Please allow camera access in your browser settings."
+          : err.name === "NotFoundError"
+            ? "No camera found on this device."
+            : "Could not access camera: " + err.message
+      );
+    }
+  };
 
-    const file = e.target.files[0];
-    const fileExt = file.name.split('.').pop();
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      setCameraStream(null);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
 
-    // ✅ FIXED: use folder = userId
-    const filePath = `${userId}/${Math.random()}.${fileExt}`;
+  const closeCameraDialog = () => {
+    stopCamera();
+    setCapturedImage(null);
+    setCameraError("");
+    setCameraDialogOpen(false);
+  };
 
-    const { error: uploadError } = await supabase.storage
-      .from("krishi-user-photos")
-      .upload(filePath, file);
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+    setCapturedImage(dataUrl);
+    stopCamera();
+  };
 
-    if (uploadError) throw uploadError;
+  const retakePhoto = async () => {
+    setCapturedImage(null);
+    setCameraError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false,
+      });
+      setCameraStream(stream);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err: any) {
+      setCameraError("Could not restart camera: " + err.message);
+    }
+  };
 
-    // ✅ FIXED: same bucket
-    const { data } = supabase.storage
-      .from("krishi-user-photos")
-      .getPublicUrl(filePath);
+  const uploadCapturedPhoto = async () => {
+    if (!capturedImage || !userId) return;
+    try {
+      setUploadingPhoto(true);
 
-    const { error: updateError } = await supabase.from("profiles").upsert(
-      { id: userId, photo_url: data.publicUrl },
-      { onConflict: "id" }
-    );
+      // Convert data URL to Blob
+      const res = await fetch(capturedImage);
+      const blob = await res.blob();
 
-    if (updateError) throw updateError;
+      const filePath = `${userId}/${Math.random()}.jpg`;
 
-    setPhotoUrl(data.publicUrl);
-    await loadProfile();
+      const { error: uploadError } = await supabase.storage
+        .from("krishi-user-photos")
+        .upload(filePath, blob, { contentType: "image/jpeg" });
 
-  } catch (error: any) {
-    console.error(error);
-    alert("Error uploading photo: " + error.message);
-  } finally {
-    setUploadingPhoto(false);
-  }
-};
+      if (uploadError) throw uploadError;
+
+      // Use signed URL since the bucket may not be public
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from("krishi-user-photos")
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365 * 10); // 10 years
+
+      if (signedUrlError || !signedUrlData?.signedUrl) {
+        throw signedUrlError || new Error("Failed to generate signed URL");
+      }
+
+      const photoUrlToSave = signedUrlData.signedUrl;
+
+      const { error: updateError } = await supabase.from("profiles").upsert(
+        { id: userId, photo_url: photoUrlToSave },
+        { onConflict: "id" }
+      );
+
+      if (updateError) throw updateError;
+
+      setPhotoUrl(photoUrlToSave);
+      closeCameraDialog();
+      await loadProfile();
+    } catch (error: any) {
+      console.error(error);
+      alert("Error uploading photo: " + error.message);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const openOtpDialog = () => {
     setOtpStep("phone");
@@ -518,17 +611,15 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <div>
-                  <Button asChild size="sm" variant="outline" className="w-full text-xs h-8 relative overflow-hidden" disabled={uploadingPhoto}>
-                    <label className="cursor-pointer">
-                      {uploadingPhoto ? "Uploading..." : (photoUrl ? "Change Photo" : "Upload Photo")}
-                      <Input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handlePhotoUpload} 
-                        disabled={uploadingPhoto}
-                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                      />
-                    </label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full text-xs h-8"
+                    disabled={uploadingPhoto}
+                    onClick={openCamera}
+                    id="take-photo-btn"
+                  >
+                    📷 {photoUrl ? "Retake Photo" : "Take Photo"}
                   </Button>
                 </div>
               </div>
@@ -910,6 +1001,142 @@ export default function ProfilePage() {
               </Button>
             )}
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Camera Capture Dialog */}
+      <Dialog open={cameraDialogOpen} onOpenChange={(open) => { if (!open) closeCameraDialog(); }}>
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="flex items-center gap-2">
+              📷 Take a Photo
+            </DialogTitle>
+            <DialogDescription>
+              {capturedImage
+                ? "Review your photo below. Confirm or retake."
+                : "Position yourself in the frame and click capture."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-4 pb-4 space-y-4">
+            {/* Error State */}
+            {cameraError && (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-center">
+                <p className="text-sm text-destructive">{cameraError}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={closeCameraDialog}
+                >
+                  Close
+                </Button>
+              </div>
+            )}
+
+            {/* Live Camera Feed */}
+            {!capturedImage && !cameraError && (
+              <div className="relative rounded-xl overflow-hidden bg-black aspect-[4/3] flex items-center justify-center">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover mirror"
+                  style={{ transform: "scaleX(-1)" }}
+                />
+                {!cameraStream && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                    <svg className="animate-spin h-8 w-8 text-white" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                  </div>
+                )}
+                {/* Viewfinder overlay */}
+                <div className="absolute inset-4 border-2 border-white/30 rounded-2xl pointer-events-none" />
+                <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
+                  <span className="text-white/70 text-xs bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">
+                    Position your face in the frame
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Captured Image Preview */}
+            {capturedImage && (
+              <div className="relative rounded-xl overflow-hidden bg-black aspect-[4/3]">
+                <img
+                  src={capturedImage}
+                  alt="Captured"
+                  className="w-full h-full object-cover"
+                  style={{ transform: "scaleX(-1)" }}
+                />
+                <div className="absolute top-3 right-3">
+                  <Badge className="bg-green-500/90 text-white border-0 text-xs">
+                    ✓ Captured
+                  </Badge>
+                </div>
+              </div>
+            )}
+
+            {/* Hidden canvas for capture */}
+            <canvas ref={canvasRef} className="hidden" />
+
+            {/* Action buttons */}
+            {!cameraError && (
+              <div className="flex gap-3">
+                {!capturedImage ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={closeCameraDialog}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="flex-1 bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-xl transition-all"
+                      onClick={capturePhoto}
+                      disabled={!cameraStream}
+                      id="capture-btn"
+                    >
+                      📸 Capture
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={retakePhoto}
+                      disabled={uploadingPhoto}
+                    >
+                      🔄 Retake
+                    </Button>
+                    <Button
+                      className="flex-1 bg-gradient-to-r from-green-600 to-green-500 text-white shadow-lg hover:shadow-xl transition-all"
+                      onClick={uploadCapturedPhoto}
+                      disabled={uploadingPhoto}
+                      id="confirm-photo-btn"
+                    >
+                      {uploadingPhoto ? (
+                        <span className="flex items-center gap-2">
+                          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                          </svg>
+                          Uploading...
+                        </span>
+                      ) : (
+                        "✓ Use This Photo"
+                      )}
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </AppLayout>

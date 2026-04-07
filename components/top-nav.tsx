@@ -16,6 +16,7 @@ export function TopNav({ onMenuClick }: TopNavProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
   const supabase = createClient();
   const router = useRouter();
 
@@ -23,6 +24,19 @@ export function TopNav({ onMenuClick }: TopNavProps) {
     // Get current session user
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
+      // Fetch profile photo from profiles table
+      if (data.user) {
+        supabase
+          .from("profiles")
+          .select("photo_url")
+          .eq("id", data.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            if (profile?.photo_url) {
+              setProfilePhotoUrl(profile.photo_url);
+            }
+          });
+      }
     });
 
     // Listen to auth state changes
@@ -30,6 +44,19 @@ export function TopNav({ onMenuClick }: TopNavProps) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      // Re-fetch profile photo on auth change
+      if (session?.user) {
+        supabase
+          .from("profiles")
+          .select("photo_url")
+          .eq("id", session.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            setProfilePhotoUrl(profile?.photo_url ?? null);
+          });
+      } else {
+        setProfilePhotoUrl(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -40,8 +67,9 @@ export function TopNav({ onMenuClick }: TopNavProps) {
     router.push("/login");
   };
 
+  // Prioritize: uploaded profile photo > Google/OAuth avatar > letter fallback
   const avatarUrl =
-    user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+    profilePhotoUrl || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   // Derive display name and avatar letter from user metadata or email
   const displayName =
