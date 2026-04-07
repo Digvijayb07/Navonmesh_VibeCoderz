@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { AppLayout } from "@/components/app-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ interface ProduceListing {
   latitude: number | null;
   longitude: number | null;
   address: string | null;
+  image_url?: string | null;
   listing_type: "crop" | "tool";
   condition: string | null;
   rental_price_per_day: number | null;
@@ -269,6 +270,68 @@ export default function MarketplacePage() {
   const [contactLoading, setContactLoading] = useState(false);
   const [contactError, setContactError] = useState<string | null>(null);
 
+  // Listing camera capture state
+  const [listingCameraOpen, setListingCameraOpen] = useState(false);
+  const [listingCameraStream, setListingCameraStream] = useState<MediaStream | null>(null);
+  const [listingCapturedImage, setListingCapturedImage] = useState<string | null>(null);
+  const [listingCameraError, setListingCameraError] = useState("");
+  const listingVideoRef = useRef<HTMLVideoElement>(null);
+  const listingCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // ── Listing camera functions ──────────────────────────────────────────────
+  const openListingCamera = async () => {
+    setListingCapturedImage(null);
+    setListingCameraError("");
+    setListingCameraOpen(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false,
+      });
+      setListingCameraStream(stream);
+      setTimeout(() => {
+        if (listingVideoRef.current) listingVideoRef.current.srcObject = stream;
+      }, 100);
+    } catch (err: any) {
+      setListingCameraError(
+        err.name === "NotAllowedError"
+          ? "Camera permission denied. Please allow camera access."
+          : err.name === "NotFoundError"
+            ? "No camera found on this device."
+            : "Could not access camera: " + err.message
+      );
+    }
+  };
+
+  const stopListingCamera = () => {
+    if (listingCameraStream) {
+      listingCameraStream.getTracks().forEach((t) => t.stop());
+      setListingCameraStream(null);
+    }
+    if (listingVideoRef.current) listingVideoRef.current.srcObject = null;
+  };
+
+  const closeListingCamera = () => {
+    stopListingCamera();
+    setListingCapturedImage(null);
+    setListingCameraError("");
+    setListingCameraOpen(false);
+  };
+
+  const captureListingPhoto = () => {
+    if (!listingVideoRef.current || !listingCanvasRef.current) return;
+    const video = listingVideoRef.current;
+    const canvas = listingCanvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    setListingCapturedImage(canvas.toDataURL("image/jpeg", 0.85));
+    stopListingCamera();
+    setListingCameraOpen(false);
+  };
+
   // ── Fetch seller details ────────────────────────────────────────────────────
   const fetchSellerDetails = async (farmerId: string) => {
     setContactLoading(true);
@@ -493,6 +556,12 @@ export default function MarketplacePage() {
     setListLoading(true);
     setListError(null);
 
+    if (!listingCapturedImage) {
+      setListError("📸 Please take a photo of your item before listing.");
+      setListLoading(false);
+      return;
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -506,6 +575,30 @@ export default function MarketplacePage() {
     await supabase
       .from("profiles")
       .upsert({ id: user.id }, { onConflict: "id", ignoreDuplicates: true });
+
+    // Upload item photo
+    let imageUrl: string | null = null;
+    try {
+      const photoRes = await fetch(listingCapturedImage);
+      const photoBlob = await photoRes.blob();
+      const photoPath = `${user.id}/listings/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("krishi-user-photos")
+        .upload(photoPath, photoBlob, { contentType: "image/jpeg" });
+      if (uploadError) throw uploadError;
+
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from("krishi-user-photos")
+        .createSignedUrl(photoPath, 60 * 60 * 24 * 365 * 10);
+      if (signedUrlError || !signedUrlData?.signedUrl)
+        throw signedUrlError || new Error("Failed to generate signed URL");
+      imageUrl = signedUrlData.signedUrl;
+    } catch (err: any) {
+      setListError("Failed to upload photo: " + err.message);
+      setListLoading(false);
+      return;
+    }
 
     const isTool = listForm.listingType === "tool";
     const { error } = await supabase.from("produce_listings").insert({
@@ -527,6 +620,7 @@ export default function MarketplacePage() {
       longitude: sellerCoords.longitude ?? null,
       address:
         listForm.sellerAddress.trim() || sellerCoords.display_name || null,
+      image_url: imageUrl,
     });
 
     if (error) {
@@ -547,6 +641,9 @@ export default function MarketplacePage() {
     setSellerCoords({ latitude: null, longitude: null, display_name: "" });
     setShowSellerManualAddress(false);
     setGeoError(null);
+    stopListingCamera();
+    setListingCapturedImage(null);
+    setListingCameraError("");
   };
 
   // ── Buy-now modal handlers ──────────────────────────────────────────────────
@@ -910,9 +1007,15 @@ export default function MarketplacePage() {
                 key={listing.id}
                 className="border-border overflow-hidden hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
-                  <div className="text-5xl mb-4">
-                    {itemEmoji(listing.crop_name, listing.listing_type)}
-                  </div>
+                  {listing.image_url ? (
+                    <div className="rounded-xl overflow-hidden bg-muted aspect-[4/3] mb-4">
+                      <img src={listing.image_url} alt={listing.crop_name} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="text-5xl mb-4">
+                      {itemEmoji(listing.crop_name, listing.listing_type)}
+                    </div>
+                  )}
                   <h3 className="text-xl font-bold text-foreground">
                     {listing.crop_name}
                   </h3>
@@ -1443,6 +1546,50 @@ export default function MarketplacePage() {
                     className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none text-sm"
                   />
                 </div>
+
+                {/* ── Item Photo (Mandatory) ───────────────────────────── */}
+                <div className="border-t border-border pt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base">📸</span>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Item Photo <span className="text-destructive">*</span>
+                    </h3>
+                    <span className="text-xs text-muted-foreground">
+                      (take a live photo of your {listForm.listingType === "tool" ? "tool" : "crop"})
+                    </span>
+                  </div>
+
+                  {listingCapturedImage ? (
+                    <div className="space-y-3">
+                      <div className="relative rounded-xl overflow-hidden bg-black aspect-[4/3] max-w-[300px]">
+                        <img src={listingCapturedImage} alt="Item preview" className="w-full h-full object-cover" />
+                        <div className="absolute top-2 right-2">
+                          <Badge variant="outline" className="bg-green-500/90 text-white border-0 text-xs">
+                            ✓ Captured
+                          </Badge>
+                        </div>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" onClick={openListingCamera} className="gap-2">
+                        🔄 Retake Photo
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={openListingCamera}
+                      className="w-full py-8 border-dashed border-2 hover:border-primary/50 transition-colors"
+                      id="listing-take-photo-btn"
+                    >
+                      <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <span className="text-3xl">📷</span>
+                        <span className="text-sm font-medium">Take a Photo</span>
+                        <span className="text-xs">Click to open camera and capture your item</span>
+                      </div>
+                    </Button>
+                  )}
+                </div>
+
                 <div className="flex gap-3 pt-2 pb-1">
                   <Button
                     type="button"
@@ -1469,6 +1616,65 @@ export default function MarketplacePage() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* LISTING CAMERA DIALOG */}
+      {listingCameraOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) closeListingCamera(); }}>
+          <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">📷 Take Item Photo</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Capture a clear photo of your {listForm.listingType === "tool" ? "tool" : "crop"}
+                </p>
+              </div>
+              <button onClick={closeListingCamera} className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors text-lg">
+                ✕
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              {listingCameraError && (
+                <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-center">
+                  <p className="text-sm text-destructive">{listingCameraError}</p>
+                  <Button variant="outline" size="sm" className="mt-3" onClick={closeListingCamera}>Close</Button>
+                </div>
+              )}
+              {!listingCameraError && (
+                <div className="relative rounded-xl overflow-hidden bg-black aspect-[4/3] flex items-center justify-center">
+                  <video ref={listingVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                  {!listingCameraStream && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                      <Spinner className="h-8 w-8 text-white" />
+                    </div>
+                  )}
+                  <div className="absolute inset-4 border-2 border-white/30 rounded-2xl pointer-events-none" />
+                  <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
+                    <span className="text-white/70 text-xs bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">
+                      Point camera at your item
+                    </span>
+                  </div>
+                </div>
+              )}
+              <canvas ref={listingCanvasRef} className="hidden" />
+              {!listingCameraError && (
+                <div className="flex gap-3">
+                  <Button variant="outline" className="flex-1" onClick={closeListingCamera}>Cancel</Button>
+                  <Button
+                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                    onClick={captureListingPhoto}
+                    disabled={!listingCameraStream}
+                    id="listing-capture-btn"
+                  >
+                    📸 Capture
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
